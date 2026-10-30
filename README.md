@@ -1,164 +1,103 @@
 # Praxis Swarm
 
-**Make model handoffs explicit. Run parallel coding agents with results you can review.**
+**An AI project lead that puts the right agents to work.**
 
-Praxis Swarm gives each worker a task contract, a bounded handoff packet and an
-owned file scope, then keeps the execution record and candidate changes together.
-Supply a plan, let two agents work in separate worktrees, and review their frozen
-outputs before deciding what to accept. It is an independent fork of
-[Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator), which
-provides the daemon, desktop and agent adapters.
+Praxis Swarm is being built to help you turn a goal into coordinated work across a team of AI agents and models.
 
-**Supervised source alpha.** The `ao swarm` CLI has completed two concurrent
-Luna/low assignments on one Apple Silicon Mac, with independently tested outputs
-and observed controller stops. Source is published at
-[`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm).
-See the [alpha release](https://github.com/sparkplug604/praxis-swarm/releases/tag/praxis-v0.1.0-alpha.1),
-[release checklist](docs/swarm/PUBLICATION.md) and
-[current progress](docs/swarm/PROGRESS.md) for validation status.
-Build the CLI from source; this release includes no Praxis installer.
+The vision is an AI project lead that can:
 
-## Why use Praxis Swarm?
+- Develop a plan from your goal.
+- Choose suitable agents and models for different assignments.
+- Coordinate work across the team.
+- Review results, identify issues, and help bring the work together.
+- Keep you informed and involve you when your judgment is needed.
 
-Turn a prepared plan into parallel work you can inspect, test and approve.
+Today, Praxis Swarm provides an early foundation for that experience. Its supervised alpha takes a prepared plan, gives two workers structured assignments, runs them in parallel, and preserves their results for review.
 
-- **Plan with one model, execute with another.** Bring a plan prepared with your
-  preferred model, then explicitly choose the worker model and reasoning effort.
-  Carry requirements, interfaces and acceptance criteria into each assignment.
-- **Give each worker a clear job.** Supply a bounded handoff packet and a defined
-  file scope. Start both workers from the same pinned source commit in separate
-  worktrees, and flag changes outside their assigned scope.
-- **Review exactly what was produced.** Inspect frozen candidate files, hashes
-  and patches alongside execution records. Test the outputs before deciding what
-  to integrate.
-- **Inspect uncertain runs without duplicating work.** Retrieve the existing run
-  using the same request ID and identical input. Use explicit stop commands and
-  daemon-owned deadlines to manage execution while retaining its evidence.
-- **Make informed model choices.** Keep model settings and available usage records
-  with each run so you can assess assignments and refine future plans.
+[Get started](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/SUPERVISED_WORKFLOW.md) · [See the demonstration](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/SUPERVISED_WORKFLOW_RESULT.md) · [Project progress](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/PROGRESS.md)
 
-Built on Agent Orchestrator's execution foundation, Praxis adds a structured
-handoff and evidence workflow for supervised delegation.
-[Try the offline demo](#try-it-without-a-model-account) to explore the coordination
-workflow without launching models.
+## Why Praxis Swarm?
 
-## Try it without a model account
+A useful AI team needs more than multiple agents working at once. Each worker needs to understand its assignment, have the context to carry it out, and produce results that can be brought back to the project.
 
-You need Bash, Git, Python 3 and Go 1.27.1 on PATH. The documented setup is macOS;
-other hosts are not yet qualified:
+Praxis Swarm gives that work a structure: clear handoffs, separate workspaces, supervised execution, and results that stay connected to the original assignments.
 
-```bash
-git clone https://github.com/sparkplug604/praxis-swarm.git
-cd praxis-swarm
-bash scripts/swarm/demo-offline.sh
-```
+Praxis Swarm builds on [Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator), using its agent sessions and worktrees as the foundation for this workflow.
 
-From an existing checkout, run just the last command. It prints a new temporary
-output directory containing `report.md`, `report.json` and raw test logs. Success
-requires all four named tests to pass without skips. Failure returns nonzero and
-preserves the logs.
+## From plan to coordinated work
 
-This demo exercises real coordination code, SQLite records and overlapping helper
-processes with labelled provider/runtime test doubles. **It launches no models.**
-Go may download public modules or a toolchain on first use; a disconnected run
-requires a prepared cache. See the [offline quick start](docs/swarm/QUICKSTART.md)
-for prerequisites, report interpretation and troubleshooting.
+Once you have a plan, Praxis Swarm helps put it into action. It prepares an assignment for each worker, starts the workers in separate workspaces, and keeps their results together for review.
 
-## Run two real workers
+In the current alpha, you submit the prepared plan to Praxis Swarm, which runs two workers in parallel.
 
-The first live profile takes exactly two independent tasks in one clean local
-repository, with disjoint file scopes and an explicit Codex model/effort. The
-example below creates a disposable duration-parser/formatter project. You also
-need Python 3.8+, a working Codex CLI and an existing login with access to the
-selected model. Check `codex --version` and `codex login status` first.
+### Prepare clear handoffs
 
-From the checkout root, use a fresh shell and an unused loopback port:
+Praxis Swarm turns each assignment into an **assignment packet**: a structured brief that gives the worker information it needs to get started.
 
-```bash
-SWARM_DEMO_ROOT="$(mktemp -d /tmp/praxis-demo.XXXXXX)"
-go -C backend build -o "$SWARM_DEMO_ROOT/ao" ./cmd/ao
-export AO_DATA_DIR="$SWARM_DEMO_ROOT/data"
-export AO_RUN_FILE="$SWARM_DEMO_ROOT/daemon.json"
-export AO_PORT=43220
-export AO_HARNESS_UPDATE_CHECKS=off
-export AO_TELEMETRY_EVENTS=off AO_TELEMETRY_METRICS=off AO_TELEMETRY_REMOTE=off
-python3 scripts/swarm/create-supervised-demo.py \
-  --output-dir "$SWARM_DEMO_ROOT/fixture" \
-  --model gpt-5.6-luna --effort low
-"$SWARM_DEMO_ROOT/ao" daemon >"$SWARM_DEMO_ROOT/daemon.log" 2>&1 &
-```
+A packet brings together:
 
-The generator and daemon startup above do not launch workers. Wait until
-`curl --fail "http://127.0.0.1:$AO_PORT/healthz"` succeeds, then register the fixture:
+- **The job:** What the worker is being asked to accomplish.
+- **Its responsibilities:** The files or areas assigned to it, along with work outside its scope.
+- **How the pieces fit:** Interfaces, expected behavior, and error rules relevant to the assignment.
+- **The context:** Supplied specifications and reference material selected for the task.
+- **The expected result:** Acceptance criteria, recorded tools, and instructions for reporting results or blockers.
 
-```bash
-"$SWARM_DEMO_ROOT/ao" project add --id ghl03-demo \
-  --path "$SWARM_DEMO_ROOT/fixture/repository" --worker-agent codex
-"$SWARM_DEMO_ROOT/ao" project set-config ghl03-demo \
-  --default-branch main --worker-agent codex
-```
+For example, a plan might assign one worker to build a parser and another to build a formatter. Each receives its own packet, with the information needed to make the two components work together.
 
-**The next command starts two real model sessions and consumes account usage.**
-Token reservations are advisory, not provider spending caps. The daemon owns the
-240-second deadline; an approval request, provider failure or timeout can prevent
-completion.
+Praxis Swarm checks supplied context against the content identified in the plan and records when optional context is omitted. The packet stays with the run record, so you can review **what a worker was given alongside what it produced**.
 
-```bash
-"$SWARM_DEMO_ROOT/ao" swarm run \
-  --plan "$SWARM_DEMO_ROOT/fixture/plan.json" \
-  --context "$SWARM_DEMO_ROOT/fixture/context.json" \
-  --request-id duration-demo-1 --timeout 240 >"$SWARM_DEMO_ROOT/report.json"
-```
+### Start from a shared baseline
 
-The CLI waits and writes one combined JSON report. `completed` means both turns
-completed, their controllers were observed stopped, and scoped candidates were
-captured with the source preserved. **It does not mean the code is accepted.**
-Review and independently test the frozen files before integrating them.
-`stopped` may contain partial work; `needs_attention` requires inspection and
-returns a nonzero exit status.
+Praxis Swarm checks the plan and source before starting the workers. Each worker receives a separate worktree created from the source commit specified in the plan.
 
-Use `ao swarm get RUN_ID` and `ao swarm stop RUN_ID` with the same built binary
-and shell environment. Ctrl-C stops the CLI wait, not the workers. Reuse the same
-request ID and identical input to recover an uncertain submission. After stops
-are confirmed, shut down the scratch daemon with
-`curl --fail -X POST "http://127.0.0.1:$AO_PORT/shutdown"` and retain its data for review.
-The [full supervised guide](docs/swarm/SUPERVISED_WORKFLOW.md) explains report
-paths, recovery, source pinning, shutdown verification and supplying your own plan.
+This gives the workers a shared starting point and keeps their changes separately reviewable.
 
-## What the evidence supports
+### Follow the run
 
-| Capability | Current boundary |
-| --- | --- |
-| Explicit handoff contracts and context selection | Implemented and tested backend services; the CLI consumes supplied plans |
-| Offline scheduling, replay and cancellation | Four required regression tests; helper-process overlap is distinct from model overlap |
-| Supplied-plan parallel execution | Two Luna/low workers completed on one Mac, with 12.14 seconds of overlapping provider turns |
-| Reviewable outputs | Frozen candidate files, hashes, tracked-file patches, available usage and stop observations |
-| Acceptance and integration | Human review and independent testing; no automatic merge or acceptance decision |
-| Cost and containment | Advisory budgets; no demonstrated token savings or complete process-containment guarantee |
+Praxis Swarm records the worker launch intents and supervises the run through a deadline. You can inspect the run’s status, retrieve its record, or request a stop.
 
-The [recorded confirmation](docs/swarm/SUPERVISED_WORKFLOW_RESULT.md) includes
-independent checks of the combined toy implementation on Python 3.9 and 3.14.
-It is evidence for this workflow, not a benchmark of general coding quality.
-The separate exact-copy runtime remains gated. Ordinary AO worktrees are not an
-adversarial sandbox, and manual AO session restoration is outside this fresh-start
-profile. The inherited desktop does not yet expose the Praxis swarm workflow.
+When an outcome needs attention, Praxis Swarm keeps that visible in the run record. If a response is uncertain, you can retrieve the recorded request using the same request ID and input.
 
-## Continue from here
+### Review the results
 
-- [Supervised CLI guide](docs/swarm/SUPERVISED_WORKFLOW.md): run, inspect and stop workers; supply your own plan.
-- [Planning and handoff contracts](docs/swarm/PLANNING_AND_HANDOFF.md): task ownership, context and packet limits.
-- [Release notes](docs/swarm/RELEASE_NOTES.md): this candidate's scope and known limits.
-- [Progress](docs/swarm/PROGRESS.md) and [roadmap](docs/swarm/BUILD_PLAN.md): verified work and what remains.
-- [Contributing](CONTRIBUTING.md) and [issues](https://github.com/sparkplug604/praxis-swarm/issues): report a problem or propose a focused improvement.
+Praxis Swarm captures the workers’ candidate files and keeps them alongside the run information. The record can include:
 
-## Upstream and licensing
+- The plan and worker assignment packets.
+- Source commit and snapshot information.
+- Candidate files, content hashes, and tracked-file patches.
+- Worker status and available execution observations.
+- Available model, timing, and usage information.
+- Errors, limits, and context omissions.
 
-Built on Agent Orchestrator at commit
-`71bb19f5947a64853ee6d11225bc896563878c50`. Original history and license declarations
-are retained; see [provenance](docs/swarm/UPSTREAM.md), [LICENSE](LICENSE) and
-[third-party declarations](THIRD_PARTY_NOTICES.md). This independent project does
-not imply endorsement by OrchestratorInc or OpenAI.
+This gives you a way to see **what each worker was asked to do, what it produced, and what Praxis Swarm observed during the run**. You can then inspect and test the captured work before integrating it.
 
-Modification notice: Praxis Swarm replaces the inherited README with the fork's
-handoff, offline-demo and supervised-CLI entrypoints. The original is retained in
-[the pinned upstream history](https://github.com/OrchestratorInc/agent-orchestrator/blob/71bb19f5947a64853ee6d11225bc896563878c50/README.md).
+## Praxis Swarm in action
+
+In a supervised demonstration, Praxis Swarm ran two Luna/low workers on a parser-and-formatter assignment. The workers operated in separate worktrees, and their provider turns overlapped.
+
+Praxis Swarm captured their results, and the combined frozen implementation was independently tested on Python 3.9 and 3.14.
+
+[Read the demonstration results](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/SUPERVISED_WORKFLOW_RESULT.md)
+
+## What works today
+
+Praxis Swarm is a **supervised source alpha**. Its current workflow supports:
+
+| Capability | Available today |
+|---|---|
+| **Planning input** | A prepared plan with separate assignments for two workers |
+| **Workers** | Two parallel Codex workers using a selected model and reasoning effort |
+| **Handoffs** | Structured assignment packets with relevant supplied context |
+| **Workspaces** | Separate worktrees based on the plan’s source commit |
+| **Supervision** | Launch records, deadlines, status inspection, and explicit stop |
+| **Results** | Captured candidate files, hashes, patches, and available execution observations |
+
+You submit the prepared plan and review the results. The live workflow has been demonstrated on one Apple Silicon Mac.
+
+## Get started
+
+- [Run a supervised two-worker swarm](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/SUPERVISED_WORKFLOW.md)
+- [Explore the offline coordination demo](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/QUICKSTART.md)
+- [Read the release notes](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/RELEASE_NOTES.md)
+- [Follow project progress](https://github.com/sparkplug604/praxis-swarm/blob/main/docs/swarm/PROGRESS.md)
+- [Contribute](https://github.com/sparkplug604/praxis-swarm/blob/main/CONTRIBUTING.md)
