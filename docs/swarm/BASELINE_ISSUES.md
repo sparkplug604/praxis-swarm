@@ -121,6 +121,32 @@ Future single-package verification should allow at least 30 minutes on this Mac.
 Session-manager/chat coverage remains as recorded above; neither was changed or
 requalified by SWM-01/02. See `swm-01-02/validation-summary.json` and raw receipts.
 
+## GHL-04 verification update — 30 October 2026
+
+The release run completed the entire session-manager package under race detection
+(351.215 seconds) and the entire SQLite migration package (1,033.749 seconds)
+with a 30-minute package deadline. Nineteen affected packages passed in the first
+command; the CLI package exposed missing classification for new swarm commands.
+That registration was fixed with conservative unknown-command handling preserved.
+The final full CLI race recheck passed all 503 top-level tests, with two expected
+Windows/Linux-only skips on Mac (71.406 seconds).
+
+One intermediate CLI run encountered an inherited large browser-response test's
+`unexpected EOF`. The unchanged browser test passed in isolation and the final
+full CLI recheck passed; the transient failure remains retained, without a claim
+that its cause was diagnosed. These results close the earlier incomplete local
+session-manager/SQLite coverage for this revision. They do not establish a full
+backend-wide or full frontend unit-suite pass. The frontend type check passed.
+Release receipts are linked from [PROGRESS](PROGRESS.md).
+
+Hosted validation additionally caught 280 lint findings and a Windows compile
+failure in the new Unix-only tool verifier. The findings were corrected without
+disabling lint rules, and platform-specific helpers restore the Windows CLI build
+while explicitly rejecting unsupported tool verification there. Native Mac lint
+also exposed Darwin-only findings; both Mac and Linux analysis now report zero
+issues. Focused and full affected regression suites passed after these corrections.
+The earlier failures remain recorded; live runtime qualification is still Mac-only.
+
 ## B-07: Public-boundary check masked failed workspace discovery (repaired)
 
 During SWM-01/02 verification, invoking the inherited script without the pinned

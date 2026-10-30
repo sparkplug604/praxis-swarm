@@ -13,7 +13,8 @@ provides the daemon, desktop and agent adapters.
 Luna/low assignments on one Apple Silicon Mac, with independently tested outputs
 and observed controller stops. Source is published at
 [`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm).
-See the [release checklist](docs/swarm/PUBLICATION.md) and
+See the [alpha release](https://github.com/sparkplug604/praxis-swarm/releases/tag/praxis-v0.1.0-alpha.1),
+[release checklist](docs/swarm/PUBLICATION.md) and
 [current progress](docs/swarm/PROGRESS.md) for validation status.
 Build the CLI from source; this release includes no Praxis installer.
 

@@ -3,8 +3,9 @@
 [PROGRESS.md](PROGRESS.md) owns completion and the next task. This describes the
 source publication boundary. The public repository is
 [sparkplug604/praxis-swarm](https://github.com/sparkplug604/praxis-swarm).
-The first candidate was uploaded on 30 October 2026; PROGRESS records final
-validation and release-tag status.
+The source alpha is `praxis-v0.1.0-alpha.1`. [Release page](https://github.com/sparkplug604/praxis-swarm/releases/tag/praxis-v0.1.0-alpha.1).
+PROGRESS and the release evidence distinguish passed checks from the two hosted
+workflows still running at publication.
 
 ## Candidate contents
 
@@ -43,7 +44,7 @@ download links.
 The documentation deployment, PR leaderboard comments and vendor-feed polling
 jobs are restricted to the upstream repository. Existing upstream owner guards
 remain intact. The retained ordinary test workflows are not proof of a fully
-qualified Praxis release; their first remote runs still need inspection.
+qualified Praxis release; the remaining full Go and Frontend runs need final inspection.
 
 No installer/binary release, deployment, npm publication or live-provider CI is
 part of this developer preview. Deliberate future release workflows should be

@@ -1,10 +1,11 @@
-# Supervised alpha candidate
+# Praxis Swarm 0.1.0-alpha.1 — supervised source release
 
 Prepared 30 October 2026 for the public
 [`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm) repository.
-Publication and release verification are pending; this document does not announce
-a published tag, installer or binary. [PUBLICATION.md](PUBLICATION.md) records the
-release boundary, and [PROGRESS.md](PROGRESS.md) owns current completion status.
+Release identifier: `praxis-v0.1.0-alpha.1`. This package contains source,
+documentation and sanitized validation evidence; it includes no installer or
+bundled dependency binaries. [PUBLICATION.md](PUBLICATION.md) records the release
+boundary, and [PROGRESS.md](PROGRESS.md) owns current completion status.
 
 ## Included
 
@@ -44,11 +45,26 @@ acceptance and integration still require human review and independent testing.
 There is no automatic acceptance decision, branch merge, model retry or planner
 call in this profile. The supplied plan must contain exactly two independent tasks.
 
-Only one Mac setup has live confirmation. Ordinary AO worktrees are not adversarial
+Tool identity verification explicitly rejects Windows until equivalent handle
+checks are implemented; a successful Windows CLI build does not qualify live swarm
+execution there. Only one Mac setup has live confirmation. Ordinary AO worktrees are not adversarial
 containment, and observed controller stops do not prove complete descendant-process
 absence. The separate exact-copy runtime remains gated. Restart reconciliation
 can require attention; manual AO session restoration is outside this fresh-start
 profile. The inherited desktop does not expose the Praxis swarm workflow yet.
+
+## Release validation
+
+A clean checkout builds the CLI and passes the four-test offline demo without
+leaving source changes. Mac and Linux static analysis report zero lint issues.
+Affected race suites, Python tests, generated API/SQL checks and frontend type
+checking passed. The [release evidence](evidence/source-alpha-release.json) records
+exact revisions and hosted outcomes, including corrected initial failures. No
+additional paid model run was needed for release preparation.
+
+The hosted supervised-alpha gate and cross-platform CLI E2E checks passed on the
+corrected implementation. Full inherited Go and Frontend workflows were still
+running at publication; this release does not claim their final results.
 
 ## Start and contribute
 

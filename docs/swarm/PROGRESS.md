@@ -12,11 +12,23 @@ destination is `sparkplug604/praxis-swarm`. **GHL-02: two live AO workers demons
 **GHL-03: supplied-plan supervised CLI integration confirmed.** A fresh authorized
 trial of the reporting fix completed both Luna/low workers, passed frozen-code
 acceptance and verified clean shutdown. The earlier partial trial remains intact.
-**Active: GHL-04 — final release validation and tag.** The source candidate is
-public at `sparkplug604/praxis-swarm`; clean-clone checks passed. Full affected
-regression checks and hosted CI are being completed before the release tag.
-Existing game work and prior evidence are preserved. No further model trial is needed
-for this narrow launch gate unless a material implementation change requires it.
+**GHL-04: source-alpha release package complete.** Public repository:
+[sparkplug604/praxis-swarm](https://github.com/sparkplug604/praxis-swarm).
+Release: [praxis-v0.1.0-alpha.1](https://github.com/sparkplug604/praxis-swarm/releases/tag/praxis-v0.1.0-alpha.1). The corrected implementation `5d780a411`
+passed the hosted supervised-alpha gate, CLI E2E on Mac/Linux/Windows/container,
+public-boundary and secret checks. Local Mac/Linux lint reports zero issues;
+clean-checkout build/offline demo and affected race suites passed. Full inherited
+Go and Frontend workflows are still running at publication and are **not claimed
+as passed**. No additional model trials were used. Existing game work is preserved.
+
+[Release notes](RELEASE_NOTES.md) and [sanitized evidence](evidence/source-alpha-release.json)
+record validation, corrections, limits and CI links. Local detailed receipts are
+in `outputs/swarm-build/ghl-04`. The release metadata changes documentation only;
+its implementation is identical to the tested commit above.
+
+**Next gate:** inspect the two outstanding hosted workflows and address any actual
+failures before promoting beyond this alpha. Full SWM-06 runtime qualification,
+automated acceptance/integration and installers remain future work.
 
 Publication may proceed as a clearly labelled developer preview before live
 integration. The supervised alpha requires the actual GHL-02/03 parallel model

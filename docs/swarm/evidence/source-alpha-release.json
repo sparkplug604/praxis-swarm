@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "release_kind": "supervised_source_alpha",
+  "repository": "https://github.com/sparkplug604/praxis-swarm",
+  "implementation_commit": "5d780a411c41d2e7c829ed7ca24d5b18051e2c14",
+  "local_validation": {
+    "clean_checkout_build": "passed again on corrected implementation; CLI help and four-test offline demo passed; checkout clean",
+    "offline_demo": "4 required tests passed with no skips",
+    "python_tests": "6 passed",
+    "public_boundary": "passed",
+    "frontend_typecheck": "passed",
+    "generated_notices_and_drift": "passed",
+    "affected_race_packages": [
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/macruntime",
+        "result": "pass",
+        "seconds": 4.899
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/qualification",
+        "result": "pass",
+        "seconds": 1.464
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/planning",
+        "result": "pass",
+        "seconds": 18.823
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/routing",
+        "result": "pass",
+        "seconds": 19.606
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/supervised",
+        "result": "pass",
+        "seconds": 20.21
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/workspace",
+        "result": "pass",
+        "seconds": 10.402
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/domain",
+        "result": "pass",
+        "seconds": 8.271
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/scheduler",
+        "result": "pass",
+        "seconds": 54.986
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/session_manager",
+        "result": "pass",
+        "seconds": 351.215
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/storage/sqlite/gen",
+        "result": "skip",
+        "seconds": 0
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/storage/sqlite/sqlitetest",
+        "result": "pass",
+        "seconds": 18.809
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/storage/sqlite/store",
+        "result": "pass",
+        "seconds": 226.912
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd",
+        "result": "pass",
+        "seconds": 9.334
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/apierr",
+        "result": "skip",
+        "seconds": 0
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/apispec",
+        "result": "pass",
+        "seconds": 2.137
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/apispec/specgen",
+        "result": "pass",
+        "seconds": 60.298
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/controllers",
+        "result": "pass",
+        "seconds": 57.549
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/envelope",
+        "result": "pass",
+        "seconds": 1.316
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/httpd/requestscope",
+        "result": "skip",
+        "seconds": 0
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/cli",
+        "result": "fail",
+        "seconds": 68.479
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/daemon",
+        "result": "pass",
+        "seconds": 28.329
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/adapters/workspace/gitworktree",
+        "result": "pass",
+        "seconds": 42.383
+      },
+      {
+        "package": "github.com/aoagents/agent-orchestrator/backend/internal/storage/sqlite",
+        "result": "pass",
+        "seconds": 1033.749
+      }
+    ],
+    "cli_correction": {
+      "reason": "New swarm commands needed explicit telemetry classification",
+      "final_full_race_result": "passed",
+      "top_level_passed": 503,
+      "platform_skipped": 2,
+      "seconds": 71.406
+    },
+    "transient_failure": "An unchanged large browser-response test failed once with unexpected EOF; isolated and final full CLI rechecks passed. Cause undiagnosed.",
+    "lint": {
+      "version": "golangci-lint 2.13.2",
+      "darwin_arm64": "0 issues",
+      "linux_amd64_cross_analysis": "0 issues",
+      "rules_disabled": false
+    },
+    "post_correction_regressions": "Full domain, planning, routing, qualification, workspace, scheduler, supervised and macruntime race suites passed; focused storage, CLI, session manager, conpty and pinned-workspace cases passed.",
+    "windows_cross_compile": "CLI E2E and planning test binaries compiled for windows/amd64; not executed locally. Tool identity verification explicitly unsupported on Windows.",
+    "initial_failures_retained": [
+      "280 Linux lint findings corrected; native lint found additional Darwin issues, also corrected",
+      "Windows CLI compile failure corrected by separating Unix verifier and rejecting unsupported Windows verification",
+      "One intermediate macruntime sandboxed check could not bind loopback; authorized native rerun passed"
+    ]
+  },
+  "publication_scan": {
+    "scanner": "gitleaks 8.30.1",
+    "full_pinned_history_objects": 77196,
+    "missing_history_objects": 0,
+    "history_findings": {
+      "fixture": 45,
+      "public_data": 7,
+      "needs_attention": 0
+    },
+    "tree_findings": {
+      "fixture": 17,
+      "public_data": 6,
+      "needs_attention": 0
+    },
+    "classification": "Independent contextual review of every finding; no suppressions or credential testing",
+    "limits": "Scanner and review findings are evidence, not a guarantee of absence",
+    "new_commits_after_initial_scan": {
+      "findings": 0,
+      "current_tree_findings_unchanged": true,
+      "reviewed_source_blobs_unchanged": true
+    }
+  },
+  "hosted_ci": {
+    "status": "supervised alpha gate passed; full Go and Frontend workflows still running at publication",
+    "tested_commit": "5d780a411c41d2e7c829ed7ca24d5b18051e2c14",
+    "runs": [
+      {
+        "conclusion": "",
+        "databaseId": 41021975675,
+        "status": "in_progress",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975675",
+        "workflowName": "Go"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975767,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975767",
+        "workflowName": "Public boundary"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975635,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975635",
+        "workflowName": "e2e-gate tests"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975663,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975663",
+        "workflowName": "gitleaks"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975744,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975744",
+        "workflowName": "Mobile"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975891,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975891",
+        "workflowName": "CLI E2E"
+      },
+      {
+        "conclusion": "",
+        "databaseId": 41021975955,
+        "status": "in_progress",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975955",
+        "workflowName": "Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 41021975926,
+        "status": "completed",
+        "url": "https://github.com/sparkplug604/praxis-swarm/actions/runs/41021975926",
+        "workflowName": "Supervised alpha"
+      }
+    ]
+  },
+  "limits": [
+    "No new live model run during release preparation",
+    "Full inherited backend/frontend suites not established by local affected checks",
+    "One Mac live confirmation; full runtime containment remains unqualified",
+    "No installer or bundled dependency binaries"
+  ],
+  "release_tag": "praxis-v0.1.0-alpha.1",
+  "release_url": "https://github.com/sparkplug604/praxis-swarm/releases/tag/praxis-v0.1.0-alpha.1",
+  "release_metadata": "Documentation-only release commit; implementation identical to tested_commit. CI intentionally skipped for that metadata commit; running code-validation jobs retained."
+}
