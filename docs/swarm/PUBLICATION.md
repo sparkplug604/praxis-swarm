@@ -1,14 +1,17 @@
-# Candidate publication boundary
+# Source publication boundary
 
 [PROGRESS.md](PROGRESS.md) owns completion and the next task. This describes the
-candidate publication boundary; it is not a claim that a public release exists.
+source publication boundary. The public repository is
+[sparkplug604/praxis-swarm](https://github.com/sparkplug604/praxis-swarm).
+The first candidate was uploaded on 30 October 2026; PROGRESS records final
+validation and release-tag status.
 
 ## Candidate contents
 
 Publish the AO-derived source history plus reviewed Praxis modifications, current
 documentation, the offline demo scripts and a sanitized in-repository evidence
 summary. Keep inherited licenses and attribution. No private cloud checkout is
-needed. A future destination remote must be separate from `upstream`.
+needed. The publication remote `origin` is separate from `upstream`.
 
 Exclude local runtime/cache trees, `node_modules`, generated binaries, scratch
 databases, model credentials, private-submodule content, raw session logs and the
@@ -55,4 +58,5 @@ usage records and observed stops. Independent checks passed for the toy fixture.
 This supports the narrow supervised-alpha user story after release checks; it
 does not establish automated acceptance/integration, complete sandboxing,
 unattended recovery or measured token savings. The upstream desktop is attributed
-separately. No public repository/release has been created by this confirmation.
+separately. The GHL-03 confirmation itself published nothing. GHL-04 created the public
+source repository; its release status is recorded in PROGRESS.

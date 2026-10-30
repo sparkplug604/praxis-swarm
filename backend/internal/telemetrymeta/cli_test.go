@@ -1,3 +1,4 @@
+// Modified for Praxis Swarm: cover swarm command classification and conservative fallback.
 package telemetrymeta
 
 import "testing"
@@ -35,6 +36,10 @@ func TestCLIActorTypeKeepsKnownLegacyUserCommands(t *testing.T) {
 		"ao handoff",
 		"ao smoke list",
 		"ao smoke set",
+		"ao swarm",
+		"ao swarm get",
+		"ao swarm run",
+		"ao swarm stop",
 	} {
 		if got := CLIActorType("", commandPath); got != "user" {
 			t.Errorf("CLIActorType(%q) = %q, want user", commandPath, got)
@@ -80,6 +85,9 @@ func TestCLIActorTypeKeepsConservativeFallback(t *testing.T) {
 		{commandPath: "ao daemon", want: "system"},
 		{commandPath: "ao spawn", want: "user"},
 		{commandPath: "ao surprise", want: "system"},
+		{actorType: "agent", commandPath: "ao swarm run", want: "agent"},
+		{actorType: "system", commandPath: "ao swarm stop", want: "system"},
+		{commandPath: "ao swarm surprise", want: "system"},
 	} {
 		if got := CLIActorType(tc.actorType, tc.commandPath); got != tc.want {
 			t.Errorf("CLIActorType(%q, %q) = %q, want %q", tc.actorType, tc.commandPath, got, tc.want)

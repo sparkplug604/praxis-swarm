@@ -92,9 +92,11 @@ jobs:
       - name: Test swarm transport, storage and source binding with race detection
         run: |
           set -euo pipefail
+          go -C backend test -race -count=1 -p 1 -timeout=15m ./internal/cli \
+            2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/cli-tests.log"
           go -C backend test -race -count=1 -p 1 -timeout=15m -v \
             -run '^(Test(Swarm|Supervised|Pinned)|TestMigrationVersionLedger$)' \
-            ./internal/domain ./internal/cli ./internal/daemon \
+            ./internal/domain ./internal/daemon \
             ./internal/httpd/controllers ./internal/session_manager \
             ./internal/storage/sqlite ./internal/storage/sqlite/store \
             ./internal/adapters/workspace/gitworktree \

@@ -7,14 +7,15 @@ Older game/Praxis handoffs and experimental boards do not override this record.
 
 ## Active launch work — 29 October 2026
 
-**GHL-01: candidate implementation and offline example complete.** Publication
-destination confirmation remains pending. **GHL-02: two live AO workers demonstrated.**
+**GHL-01: candidate implementation and offline example complete.** The public
+destination is `sparkplug604/praxis-swarm`. **GHL-02: two live AO workers demonstrated.**
 **GHL-03: supplied-plan supervised CLI integration confirmed.** A fresh authorized
 trial of the reporting fix completed both Luna/low workers, passed frozen-code
 acceptance and verified clean shutdown. The earlier partial trial remains intact.
-**Next: GHL-04 — release validation, sanitization, destination selection, commit
-and publication.** GHL-04 has not run; no repository has been published. Preserve
-all existing code, game work and prior evidence. No further model trial is needed
+**Active: GHL-04 — final release validation and tag.** The source candidate is
+public at `sparkplug604/praxis-swarm`; clean-clone checks passed. Full affected
+regression checks and hosted CI are being completed before the release tag.
+Existing game work and prior evidence are preserved. No further model trial is needed
 for this narrow launch gate unless a material implementation change requires it.
 
 Publication may proceed as a clearly labelled developer preview before live

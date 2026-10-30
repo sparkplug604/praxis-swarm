@@ -1,3 +1,4 @@
+// Modified for Praxis Swarm: classify the supervised swarm CLI command paths.
 package telemetrymeta
 
 import "strings"
@@ -177,6 +178,10 @@ var legacyActorlessUserCLICommands = map[string]struct{}{
 	"ao session restore":        {},
 	"ao spawn":                  {},
 	"ao stop":                   {},
+	"ao swarm":                  {},
+	"ao swarm get":              {},
+	"ao swarm run":              {},
+	"ao swarm stop":             {},
 	"ao version":                {},
 
 	// Legacy commands observed in PostHog's current billing-period data.

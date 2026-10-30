@@ -9,17 +9,18 @@ outputs before deciding what to accept. It is an independent fork of
 [Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator), which
 provides the daemon, desktop and agent adapters.
 
-**Supervised alpha candidate.** The `ao swarm` CLI has completed two concurrent
+**Supervised source alpha.** The `ao swarm` CLI has completed two concurrent
 Luna/low assignments on one Apple Silicon Mac, with independently tested outputs
-and observed controller stops. Public source publication is being prepared for
-[`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm);
-[publication status](docs/swarm/PUBLICATION.md) owns the remaining release checks.
-There is no Praxis installer or binary release in this candidate.
+and observed controller stops. Source is published at
+[`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm).
+See the [release checklist](docs/swarm/PUBLICATION.md) and
+[current progress](docs/swarm/PROGRESS.md) for validation status.
+Build the CLI from source; this release includes no Praxis installer.
 
 ## Try it without a model account
 
 You need Bash, Git, Python 3 and Go 1.27.1 on PATH. The documented setup is macOS;
-other hosts are not yet qualified. Once the source publication is available:
+other hosts are not yet qualified:
 
 ```bash
 git clone https://github.com/sparkplug604/praxis-swarm.git
