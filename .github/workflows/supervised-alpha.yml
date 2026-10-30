@@ -29,8 +29,6 @@ jobs:
       GOTOOLCHAIN: local
       PYTHONDONTWRITEBYTECODE: "1"
       GIT_TERMINAL_PROMPT: "0"
-      AO_DATA_DIR: ${{ runner.temp }}/praxis-alpha/ao-data
-      AO_RUN_FILE: ${{ runner.temp }}/praxis-alpha/daemon.json
       AO_HARNESS_UPDATE_CHECKS: "off"
       AO_TELEMETRY_EVENTS: "off"
       AO_TELEMETRY_METRICS: "off"
@@ -49,6 +47,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/praxis-alpha/logs"
+          printf 'AO_DATA_DIR=%s\nAO_RUN_FILE=%s\n' \
+            "$RUNNER_TEMP/praxis-alpha/ao-data" \
+            "$RUNNER_TEMP/praxis-alpha/daemon.json" >> "$GITHUB_ENV"
           {
             git rev-parse HEAD
             go version
