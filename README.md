@@ -18,6 +18,30 @@ See the [alpha release](https://github.com/sparkplug604/praxis-swarm/releases/ta
 [current progress](docs/swarm/PROGRESS.md) for validation status.
 Build the CLI from source; this release includes no Praxis installer.
 
+## Why use Praxis Swarm?
+
+Turn a prepared plan into parallel work you can inspect, test and approve.
+
+- **Plan with one model, execute with another.** Bring a plan prepared with your
+  preferred model, then explicitly choose the worker model and reasoning effort.
+  Carry requirements, interfaces and acceptance criteria into each assignment.
+- **Give each worker a clear job.** Supply a bounded handoff packet and a defined
+  file scope. Start both workers from the same pinned source commit in separate
+  worktrees, and flag changes outside their assigned scope.
+- **Review exactly what was produced.** Inspect frozen candidate files, hashes
+  and patches alongside execution records. Test the outputs before deciding what
+  to integrate.
+- **Inspect uncertain runs without duplicating work.** Retrieve the existing run
+  using the same request ID and identical input. Use explicit stop commands and
+  daemon-owned deadlines to manage execution while retaining its evidence.
+- **Make informed model choices.** Keep model settings and available usage records
+  with each run so you can assess assignments and refine future plans.
+
+Built on Agent Orchestrator's execution foundation, Praxis adds a structured
+handoff and evidence workflow for supervised delegation.
+[Try the offline demo](#try-it-without-a-model-account) to explore the coordination
+workflow without launching models.
+
 ## Try it without a model account
 
 You need Bash, Git, Python 3 and Go 1.27.1 on PATH. The documented setup is macOS;
