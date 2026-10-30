@@ -55,11 +55,11 @@ func openDirectory(path string) (directorySnapshot, error) {
 	}
 	canonical, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		return directorySnapshot{}, fmt.Errorf("%w: cannot resolve required directory: %v", ErrInvalid, err)
+		return directorySnapshot{}, fmt.Errorf("%w: cannot resolve required directory: %w", ErrInvalid, err)
 	}
 	handle, err := os.Open(canonical)
 	if err != nil {
-		return directorySnapshot{}, fmt.Errorf("%w: cannot open required directory: %v", ErrInvalid, err)
+		return directorySnapshot{}, fmt.Errorf("%w: cannot open required directory: %w", ErrInvalid, err)
 	}
 	info, err := handle.Stat()
 	if err != nil || !info.IsDir() {
@@ -69,7 +69,7 @@ func openDirectory(path string) (directorySnapshot, error) {
 	id, err := directoryFileID(handle, info)
 	if err != nil {
 		_ = handle.Close()
-		return directorySnapshot{}, fmt.Errorf("%w: cannot identify directory: %v", ErrUnverified, err)
+		return directorySnapshot{}, fmt.Errorf("%w: cannot identify directory: %w", ErrUnverified, err)
 	}
 	return directorySnapshot{directoryBinding{path, filepath.Clean(canonical), id}, handle}, nil
 }
@@ -78,7 +78,7 @@ func revalidateDirectories(directories []directorySnapshot) error {
 	for _, previous := range directories {
 		current, err := openDirectory(previous.binding.OriginalPath)
 		if err != nil {
-			return fmt.Errorf("%w: required directory changed during qualification: %v", ErrUnverified, err)
+			return fmt.Errorf("%w: required directory changed during qualification: %w", ErrUnverified, err)
 		}
 		_ = current.handle.Close()
 		if current.binding != previous.binding {

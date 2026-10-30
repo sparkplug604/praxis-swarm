@@ -13,15 +13,21 @@ import (
 )
 
 var (
-	ErrSwarmInvalid  = errors.New("invalid swarm request")
+	// ErrSwarmInvalid reports malformed swarm input.
+	ErrSwarmInvalid = errors.New("invalid swarm request")
+	// ErrSwarmConflict reports a request inconsistent with durable state.
 	ErrSwarmConflict = errors.New("swarm request conflicts with durable state")
-	ErrSwarmStale    = errors.New("stale swarm contract or lease")
+	// ErrSwarmStale reports a changed contract or expired ownership lease.
+	ErrSwarmStale = errors.New("stale swarm contract or lease")
+	// ErrSwarmNotReady reports a task whose admission requirements are unmet.
 	ErrSwarmNotReady = errors.New("swarm task is not ready")
+	// ErrSwarmCapacity reports unavailable concurrency or usage reservations.
 	ErrSwarmCapacity = errors.New("swarm capacity or usage reservation unavailable")
+	// ErrSwarmNotFound reports an absent durable swarm record.
 	ErrSwarmNotFound = errors.New("swarm record not found")
 )
 
-// Resource namespaces must identify the same repository/invariant across runs.
+// SwarmResource namespaces must identify the same repository/invariant across runs.
 // Paths are normalized relative scopes, not proof of filesystem containment.
 // The scheduler must resolve filesystem aliases before constructing these keys.
 type SwarmResource struct {
@@ -30,17 +36,20 @@ type SwarmResource struct {
 	Key       string `json:"key"`
 }
 
+// SwarmSelection records the requested harness, model and reasoning effort.
 type SwarmSelection struct {
 	Harness AgentHarness `json:"harness"`
 	Model   string       `json:"model"`
 	Effort  string       `json:"effort"`
 }
 
+// SwarmDependency binds a prerequisite task to its required contract version.
 type SwarmDependency struct {
 	TaskID  string `json:"taskId"`
 	Version int64  `json:"version"`
 }
 
+// SwarmTaskContract freezes task scope, acceptance identity and reserved usage.
 type SwarmTaskContract struct {
 	Role          string            `json:"role,omitempty"` // legacy omission means worker
 	ID            string            `json:"id"`
@@ -56,6 +65,7 @@ type SwarmTaskContract struct {
 	Work *SwarmWorkSpec `json:"work,omitempty"`
 }
 
+// SwarmPlan defines a versioned task graph and its shared admission limits.
 type SwarmPlan struct {
 	ProtocolVersion int64               `json:"protocolVersion"`
 	Version         int64               `json:"version"`
@@ -68,6 +78,7 @@ type SwarmPlan struct {
 	Tasks           []SwarmTaskContract `json:"tasks"`
 }
 
+// SwarmRun retains a plan and its cancellation and integration facts.
 type SwarmRun struct {
 	ID              string    `json:"id"`
 	RequestID       string    `json:"requestId"`
@@ -77,6 +88,7 @@ type SwarmRun struct {
 	CreatedAt       time.Time `json:"createdAt"`
 }
 
+// SwarmClaim binds an admission request to its owner and resolved launch profile.
 type SwarmClaim struct {
 	Schedule              *SwarmScheduleBinding `json:"schedule,omitempty"`
 	Routing               *SwarmRouteBinding    `json:"routing,omitempty"`
@@ -89,7 +101,7 @@ type SwarmClaim struct {
 	CapabilityFingerprint string                `json:"capabilityFingerprint"`
 }
 
-// Identity and the contract snapshot never change. Mutable execution facts are
+// SwarmAttempt identity and the contract snapshot never change. Mutable execution facts are
 // generation-fenced; expiry alone never releases reservations or retries launch.
 type SwarmAttempt struct {
 	Schedule              *SwarmScheduleBinding `json:"schedule,omitempty"`
@@ -114,18 +126,21 @@ type SwarmAttempt struct {
 	CreatedAt             time.Time             `json:"createdAt"`
 }
 
+// SwarmFence identifies the owner and generation permitted to mutate an attempt.
 type SwarmFence struct {
 	AttemptID  string
 	Owner      string
 	Generation int64
 }
 
+// SwarmUsage records one deduplicated actual-token receipt for an attempt.
 type SwarmUsage struct {
 	AttemptID    string `json:"attemptId"`
 	ReceiptID    string `json:"receiptId"`
 	ActualTokens int64  `json:"actualTokens"`
 }
 
+// SwarmBudget reports the limit, reservations and settled spend for a bucket.
 type SwarmBudget struct {
 	Bucket   string `json:"bucket"`
 	Limit    int64  `json:"limit"`
@@ -133,7 +148,7 @@ type SwarmBudget struct {
 	Spent    int64  `json:"spent"`
 }
 
-// Evidence is accepted only from coordinator-owned verifier paths, never from
+// SwarmEvidence is accepted only from coordinator-owned verifier paths, never from
 // worker claims. Storage validates bindings; it does not execute the oracle.
 type SwarmEvidence struct {
 	ID           string `json:"id"`
@@ -147,7 +162,7 @@ type SwarmEvidence struct {
 	ArtifactHash string `json:"artifactHash"`
 }
 
-// Integration records bind combined-result checks to the precise integration
+// SwarmIntegration records bind combined-result checks to the precise integration
 // commit. The later integration controller owns real review, evaluation and Git
 // mutation. This record alone never performs a Git merge.
 type SwarmIntegration struct {
@@ -162,6 +177,7 @@ type SwarmIntegration struct {
 	EvaluationArtifactHash string   `json:"evaluationArtifactHash"`
 }
 
+// SwarmHash hashes the JSON representation of a JSON-safe contract.
 func SwarmHash(value any) string {
 	data, err := json.Marshal(value)
 	if err != nil {
@@ -171,18 +187,21 @@ func SwarmHash(value any) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// SwarmValidHash accepts lowercase SHA-256 values and optionally SHA-1 commit IDs.
 func SwarmValidHash(s string, commit bool) bool {
-	if len(s) != 64 && !(commit && len(s) == 40) {
+	if len(s) != 64 && (!commit || len(s) != 40) {
 		return false
 	}
 	_, err := hex.DecodeString(s)
 	return err == nil && strings.ToLower(s) == s
 }
 
+// SwarmValidID checks bounded identifiers without surrounding whitespace or control separators.
 func SwarmValidID(s string) bool {
 	return s != "" && len(s) <= 256 && strings.TrimSpace(s) == s && !strings.ContainsAny(s, "\x00\n\r\t")
 }
 
+// SwarmResourcesConflict detects shared semantic keys or overlapping path scopes.
 func SwarmResourcesConflict(a, b SwarmResource) bool {
 	if a.Namespace != b.Namespace || a.Kind != b.Kind {
 		return false

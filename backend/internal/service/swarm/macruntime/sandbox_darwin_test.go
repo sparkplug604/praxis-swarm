@@ -56,6 +56,24 @@ func fixture(t *testing.T) SandboxOptions {
 	return SandboxOptions{Workspace: roots[0], DataDir: roots[1], Coordinator: roots[2], Evaluator: roots[3]}
 }
 
+func TestDeviceIdentityPreservesSignedEncoding(t *testing.T) {
+	for _, tt := range []struct {
+		device int32
+		want   uint64
+	}{
+		{-2147483648, 18446744071562067968},
+		{-2, 18446744073709551614},
+		{-1, 18446744073709551615},
+		{0, 0},
+		{1, 1},
+		{2147483647, 2147483647},
+	} {
+		if got := deviceIdentity(tt.device); got != tt.want {
+			t.Fatalf("device %d encoded as %d, want %d", tt.device, got, tt.want)
+		}
+	}
+}
+
 func TestSandboxRejectsDriftAndOverlap(t *testing.T) {
 	ctx := context.Background()
 	options := fixture(t)

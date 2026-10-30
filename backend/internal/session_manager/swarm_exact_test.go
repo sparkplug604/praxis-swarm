@@ -3,6 +3,7 @@ package sessionmanager
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -324,6 +325,27 @@ func TestSwarmExactPreservesRuntimeEffectEvidence(t *testing.T) {
 				t.Fatal("failed launch was repeated")
 			}
 		})
+	}
+}
+
+func TestSwarmExactRetainsNestedJoinedRuntimeHandles(t *testing.T) {
+	failure := errors.New("runtime failure")
+	noEffect := swarmExactEffectError{failure, ports.RuntimeHandle{}, ports.RuntimeEffectNone, ports.RuntimeCleanupNotAttempted}
+	possible := func(id string, cause error) error {
+		return swarmExactEffectError{cause, ports.RuntimeHandle{ID: id}, ports.RuntimeEffectPossible, ports.RuntimeCleanupFailed}
+	}
+	nested := fmt.Errorf("outer context: %w", possible("outer", possible("middle", errors.Join(
+		noEffect, fmt.Errorf("first fallback: %w", possible("first", failure)), possible("second", failure),
+	))))
+	result := domain.SwarmExecutionResult{Outcome: "unknown", HandleID: "returned"}
+	recordSwarmRuntimeError(&result, nested)
+	if result.Outcome != "unknown" || result.HandleID != "outer" || !reflect.DeepEqual(result.AdditionalHandles, []string{"middle", "first", "second", "returned"}) {
+		t.Fatalf("nested effect ownership lost: %+v", result)
+	}
+	joinedNone := domain.SwarmExecutionResult{Outcome: "unknown"}
+	recordSwarmRuntimeError(&joinedNone, fmt.Errorf("joined context: %w", errors.Join(noEffect, noEffect)))
+	if joinedNone.Outcome != "unknown" || joinedNone.HandleID != "" || len(joinedNone.AdditionalHandles) != 0 {
+		t.Fatalf("joined no-effect claims established absence: %+v", joinedNone)
 	}
 }
 

@@ -43,6 +43,7 @@ type SwarmExecutionResult struct {
 	CreatedAt         time.Time `json:"createdAt"`
 }
 
+// ValidateSwarmExecutionReceipt checks launch bindings, evidence mode and timestamp bounds.
 func ValidateSwarmExecutionReceipt(r SwarmExecutionReceipt) error {
 	if r.Version != 1 || r.Generation < 1 || !swarmExecutionTime(r.CreatedAt) ||
 		!swarmExecutionTime(r.ExpiresAt) || !r.ExpiresAt.After(r.CreatedAt) ||
@@ -65,6 +66,7 @@ func ValidateSwarmExecutionReceipt(r SwarmExecutionReceipt) error {
 	return nil
 }
 
+// ValidateSwarmExecutionResult checks immutable launch outcomes and recorded handle identities.
 func ValidateSwarmExecutionResult(r SwarmExecutionResult) error {
 	if !SwarmValidID(r.AttemptID) || !SwarmValidID(r.SessionID) ||
 		!SwarmValidHash(r.ReceiptHash, false) || !swarmExecutionTime(r.CreatedAt) ||

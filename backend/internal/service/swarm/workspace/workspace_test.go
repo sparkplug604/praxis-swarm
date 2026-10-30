@@ -12,8 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
 )
 
 func command(t *testing.T, root string, args ...string) []byte {

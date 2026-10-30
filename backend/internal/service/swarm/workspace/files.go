@@ -34,14 +34,14 @@ func identifyRoot(input string) (RootIdentity, error) {
 	if err != nil {
 		return RootIdentity{}, err
 	}
-	real, err := filepath.EvalSymlinks(abs)
+	canonical, err := filepath.EvalSymlinks(abs)
 	if err != nil {
 		return RootIdentity{}, err
 	}
 	// EvalSymlinks alone does not canonicalize case/Unicode on a Mac volume.
-	volume := filepath.VolumeName(real)
+	volume := filepath.VolumeName(canonical)
 	current := volume + string(filepath.Separator)
-	for _, part := range strings.Split(strings.TrimPrefix(real, current), string(filepath.Separator)) {
+	for _, part := range strings.Split(strings.TrimPrefix(canonical, current), string(filepath.Separator)) {
 		if part == "" {
 			continue
 		}
@@ -88,7 +88,7 @@ func identifyRoot(input string) (RootIdentity, error) {
 func validateRoot(expected RootIdentity) error {
 	actual, err := identifyRoot(expected.RequestedPath)
 	if err != nil {
-		return fmt.Errorf("%w: root unavailable: %v", ErrChanged, err)
+		return fmt.Errorf("%w: root unavailable: %w", ErrChanged, err)
 	}
 	if actual != expected {
 		return fmt.Errorf("%w: root moved or replaced", ErrChanged)
@@ -171,7 +171,7 @@ func safeInfo(info os.FileInfo) error {
 		return err
 	}
 	if info.Mode().IsRegular() && links != 1 {
-		return fmt.Errorf("%w: hardlinked file", ErrUnsafe)
+		return fmt.Errorf("%w: hard-linked file", ErrUnsafe)
 	}
 	return nil
 }
@@ -215,7 +215,8 @@ func readEntry(ctx context.Context, root *os.Root, p string) (Entry, []byte, err
 	if err != nil {
 		return Entry{}, nil, err
 	}
-	defer f.Close()
+	// This handle only reads source bytes; it has no buffered writes.
+	defer func() { _ = f.Close() }()
 	opened, err := f.Stat()
 	if err != nil {
 		return Entry{}, nil, err

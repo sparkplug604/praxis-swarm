@@ -15,7 +15,8 @@ import (
 const (
 	conPTYHostProtocolVersion         = 2
 	conPTYStyledOutputProtocolVersion = 2
-	FencedStopProtocolVersion         = 1
+	// FencedStopProtocolVersion identifies the identity-bound PTY cleanup protocol.
+	FencedStopProtocolVersion = 1
 )
 
 // Message type constants. Values must match pty-host.ts MSG_* constants exactly.

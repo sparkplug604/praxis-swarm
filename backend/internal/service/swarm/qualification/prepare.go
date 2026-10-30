@@ -36,7 +36,7 @@ func (s Service) Prepare(ctx context.Context, req Request) (Preparation, error) 
 		return out, fmt.Errorf("%w: catalog, adapter lookup and runtime inspector are required", ErrUnverified)
 	}
 	if err := req.Launch.Config.Validate(); err != nil {
-		return out, fmt.Errorf("%w: %v", ErrInvalid, err)
+		return out, fmt.Errorf("%w: %w", ErrInvalid, err)
 	}
 	if !req.Launch.Permissions.Valid() || req.Launch.Permissions == ports.PermissionModeBypassPermissions || req.Launch.Config.Permissions == ports.PermissionModeBypassPermissions {
 		return out, fmt.Errorf("%w: select a supported non-bypass permission mode", ErrUnsafePermissions)
@@ -115,10 +115,11 @@ func (s Service) Prepare(ctx context.Context, req Request) (Preparation, error) 
 		return out, err
 	}
 	out.Report.Runtime = runtime
-	if fresh, ok := adapter.(ports.AgentLaunchAuthValidator); ok {
-		out.Report.Auth, err = fresh.ValidateLaunchAuth(ctx, launch.WorkspacePath, maps.Clone(launch.Env))
-	} else if checker, ok := adapter.(ports.AgentAuthChecker); ok {
-		out.Report.Auth, err = checker.AuthStatus(ctx)
+	switch auth := adapter.(type) {
+	case ports.AgentLaunchAuthValidator:
+		out.Report.Auth, err = auth.ValidateLaunchAuth(ctx, launch.WorkspacePath, maps.Clone(launch.Env))
+	case ports.AgentAuthChecker:
+		out.Report.Auth, err = auth.AuthStatus(ctx)
 	}
 	if err != nil {
 		return out, err

@@ -44,7 +44,7 @@ func TestDarwinSwarmPTYCloseRefusesGroupAfterParentExit(t *testing.T) {
 	if !errors.Is(closeErr, ports.ErrRuntimeProbeInconclusive) {
 		t.Fatalf("Close after parent exit = %v, want unproven group ownership", closeErr)
 	}
-	if err := conn.Close(); err != closeErr {
+	if err := conn.Close(); !errors.Is(err, closeErr) {
 		t.Fatalf("repeated Close lost original uncertainty: first=%v second=%v", closeErr, err)
 	}
 	for _, role := range []string{"child", "grandchild"} {
@@ -70,7 +70,7 @@ func TestDarwinSwarmPTYCloseRefusesGroupAfterParentExit(t *testing.T) {
 	if err := syscall.Kill(-conn.PID(), 0); !errors.Is(err, syscall.ESRCH) {
 		t.Fatalf("fixture cleanup left group %d: %v", conn.PID(), err)
 	}
-	if err := conn.Close(); err != closeErr {
+	if err := conn.Close(); !errors.Is(err, closeErr) {
 		t.Fatalf("fixture cleanup erased the original Close uncertainty: %v", err)
 	}
 	t.Log("fixture_cleanup=confirmed original_close_uncertainty=retained")

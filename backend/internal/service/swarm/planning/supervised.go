@@ -14,12 +14,14 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
 )
 
+// SupervisedProfile names the supplied-plan profile for ordinary AO worker sessions.
 const SupervisedProfile = "supervised-ao-v1"
 
 // MaxSupervisedPromptBytes matches the ordinary AO session spawn prompt limit.
 // It does not include AO standing instructions or native harness context.
 const MaxSupervisedPromptBytes = 16 * 1024
 
+// SuppliedContext carries a caller-provided body whose hash must match the plan reference.
 type SuppliedContext struct {
 	ID   string `json:"id"`
 	Body string `json:"body"`

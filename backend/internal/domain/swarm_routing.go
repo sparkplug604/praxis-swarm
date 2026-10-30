@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// SwarmRouteModel limits an allowed model by role, quota scope and effort range.
 type SwarmRouteModel struct {
 	Harness    AgentHarness `json:"harness"`
 	Model      string       `json:"model"`
@@ -17,7 +18,7 @@ type SwarmRouteModel struct {
 	MaxEffort  string       `json:"maxEffort"`
 }
 
-// One immutable policy/budget bucket belongs to a canonical external account.
+// SwarmRoutingPolicy binds one immutable policy/budget bucket to a canonical external account.
 // Policy rollover is not implemented: historical classification and unresolved
 // commitments must not be reset by opening another bucket for that account.
 type SwarmRoutingPolicy struct {
@@ -30,6 +31,7 @@ type SwarmRoutingPolicy struct {
 	Models            []SwarmRouteModel         `json:"models"`
 }
 
+// SwarmQuotaWindow records an independently observed provider usage window.
 type SwarmQuotaWindow struct {
 	ID          string    `json:"id"`
 	Scope       string    `json:"scope"` // '*' is account-wide; otherwise explicit meter identity
@@ -39,7 +41,7 @@ type SwarmQuotaWindow struct {
 	ResetAt     time.Time `json:"resetAt"`
 }
 
-// Percent-only observations remain percent-only. They cannot be converted to
+// SwarmQuotaSnapshot preserves percent-only observations as percent-only. They cannot be converted to
 // token headroom without a provider-reported token capacity.
 type SwarmQuotaSnapshot struct {
 	ID         string             `json:"id"`
@@ -50,6 +52,7 @@ type SwarmQuotaSnapshot struct {
 	Windows    []SwarmQuotaWindow `json:"windows"`
 }
 
+// SwarmRouteBinding pins routing policy, quota and catalog identities for an attempt.
 type SwarmRouteBinding struct {
 	Role               string `json:"role"`
 	Premium            bool   `json:"premium"`
@@ -61,12 +64,13 @@ type SwarmRouteBinding struct {
 	ContextTokens      int64  `json:"contextTokens"`
 }
 
+// SwarmRoutingAccount pairs an account policy with its current quota snapshot.
 type SwarmRoutingAccount struct {
 	Policy SwarmRoutingPolicy `json:"policy"`
 	Quota  SwarmQuotaSnapshot `json:"quota"`
 }
 
-// Receipts are immutable observed response facts, not final attempt totals.
+// SwarmUsageReceipt contains immutable observed response facts, not final attempt totals.
 // Cache/reasoning counters are subsets; never add them to input+output again.
 type SwarmUsageReceipt struct {
 	ID               string `json:"id"`
@@ -83,6 +87,7 @@ type SwarmUsageReceipt struct {
 	CostNanos        *int64 `json:"costNanos,omitempty"`
 }
 
+// SwarmUsageTotals separates reservations, settled spend and incomplete observations.
 type SwarmUsageTotals struct {
 	Limit             int64 `json:"limit"`
 	Reserved          int64 `json:"reserved"`
@@ -92,6 +97,7 @@ type SwarmUsageTotals struct {
 	UnsettledAttempts int64 `json:"unsettledAttempts"`
 }
 
+// SwarmUsageReport aggregates total and premium usage without hiding unknown responses.
 type SwarmUsageReport struct {
 	Bucket          string           `json:"bucket"`
 	ModelMismatches int64            `json:"modelMismatches"`
@@ -99,6 +105,7 @@ type SwarmUsageReport struct {
 	Premium         SwarmUsageTotals `json:"premium"`
 }
 
+// SwarmTaskRole resolves the legacy omitted role to worker.
 func SwarmTaskRole(t SwarmTaskContract) string {
 	if t.Role == "" {
 		return "worker"
@@ -106,6 +113,7 @@ func SwarmTaskRole(t SwarmTaskContract) string {
 	return t.Role
 }
 
+// ValidateSwarmUsageReceipt rejects invalid identities, negative counts and inconsistent subsets.
 func ValidateSwarmUsageReceipt(r SwarmUsageReceipt) error {
 	for _, id := range []string{r.ID, r.AttemptID, r.OperationID, r.ProviderID, r.ResponseID} {
 		if !SwarmValidID(id) {
@@ -134,6 +142,7 @@ func ValidateSwarmUsageReceipt(r SwarmUsageReceipt) error {
 	return nil
 }
 
+// SwarmReceiptTokens sums available input and output counts from a validated receipt.
 func SwarmReceiptTokens(r SwarmUsageReceipt) int64 {
 	var n int64
 	if r.InputTokens != nil {
@@ -145,14 +154,17 @@ func SwarmReceiptTokens(r SwarmUsageReceipt) int64 {
 	return n
 }
 
+// SwarmQuotaUsage supplies local account and scope commitments for quota admission.
 type SwarmQuotaUsage struct {
 	TotalSpent, TotalReserved, ScopeSpent, ScopeReserved int64
 }
 
+// SwarmValidRole reports whether a role is supported by the swarm protocol.
 func SwarmValidRole(role string) bool {
 	return role == "planner" || role == "worker" || role == "reviewer" || role == "integration"
 }
 
+// ValidateSwarmRoutingPolicy checks account identity, allowed models and role defaults.
 func ValidateSwarmRoutingPolicy(p SwarmRoutingPolicy) error {
 	if !SwarmValidID(p.ID) || !SwarmValidID(p.AccountID) || !SwarmValidID(p.Bucket) || p.PremiumTokenLimit < 0 || len(p.Models) == 0 || len(p.Models) > 256 || len(p.Defaults) > 4 {
 		return ErrSwarmInvalid
@@ -183,6 +195,7 @@ func ValidateSwarmRoutingPolicy(p SwarmRoutingPolicy) error {
 	return nil
 }
 
+// SwarmPolicyModel finds a model allowed by the policy for the requested role.
 func SwarmPolicyModel(p SwarmRoutingPolicy, role string, s SwarmSelection) (SwarmRouteModel, bool) {
 	for _, m := range p.Models {
 		if m.Harness == s.Harness && m.Model == s.Model {
@@ -196,6 +209,7 @@ func SwarmPolicyModel(p SwarmRoutingPolicy, role string, s SwarmSelection) (Swar
 	return SwarmRouteModel{}, false
 }
 
+// ValidateSwarmQuota checks bounded windows and observation values without inferring missing usage.
 func ValidateSwarmQuota(q SwarmQuotaSnapshot) error {
 	if !SwarmValidID(q.ID) || !SwarmValidID(q.Bucket) || q.Revision < 1 || q.ObservedAt.IsZero() || !q.ExpiresAt.After(q.ObservedAt) || len(q.Windows) > 32 {
 		return ErrSwarmInvalid
@@ -216,6 +230,7 @@ func ValidateSwarmQuota(q SwarmQuotaSnapshot) error {
 	return nil
 }
 
+// CheckSwarmQuota conservatively includes local spend in provider usage checks.
 // Provider usage may already include local spent. Counting it again is a
 // conservative overestimate until a provider supplies a reconciled watermark.
 // Missing observations never become zero; an elapsed reset requires refresh.

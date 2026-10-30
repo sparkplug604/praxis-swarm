@@ -30,5 +30,8 @@ func fileIdentity(info os.FileInfo) (id string, links uint64, changed int64, err
 		return "", 0, 0, ErrUnsupported
 	}
 	changed = c.FieldByName("Sec").Int()*1e9 + c.FieldByName("Nsec").Int()
-	return fmt.Sprintf("%d:%d", s.Dev, s.Ino), uint64(s.Nlink), changed, nil
+	return fmt.Sprintf("%d:%d", s.Dev, s.Ino), widenLinkCount(s.Nlink), changed, nil
 }
+
+// Stat_t.Nlink is uint16 on Darwin and uint32 or uint64 on other Unix targets.
+func widenLinkCount[T ~uint16 | ~uint32 | ~uint64](links T) uint64 { return uint64(links) }

@@ -54,6 +54,7 @@ func (s *Store) ConfigureSwarmRouting(ctx context.Context, p domain.SwarmRouting
 	})
 }
 
+// UpdateSwarmQuota records the next observed quota revision or accepts an identical replay.
 func (s *Store) UpdateSwarmQuota(ctx context.Context, quota domain.SwarmQuotaSnapshot) error {
 	if err := domain.ValidateSwarmQuota(quota); err != nil {
 		return err
@@ -65,7 +66,7 @@ func (s *Store) UpdateSwarmQuota(ctx context.Context, quota domain.SwarmQuotaSna
 		}
 		if row.QuotaJson != "" {
 			var old domain.SwarmQuotaSnapshot
-			if e = json.Unmarshal([]byte(row.QuotaJson), &old); e != nil {
+			if e := json.Unmarshal([]byte(row.QuotaJson), &old); e != nil {
 				return e
 			}
 			if domain.SwarmHash(old) == domain.SwarmHash(quota) {
@@ -81,6 +82,7 @@ func (s *Store) UpdateSwarmQuota(ctx context.Context, quota domain.SwarmQuotaSna
 	})
 }
 
+// GetSwarmRoutingAccount returns the bucket policy and quota snapshot, refusing an unobserved quota.
 func (s *Store) GetSwarmRoutingAccount(ctx context.Context, bucket string) (domain.SwarmRoutingAccount, error) {
 	row, err := s.qr.GetSwarmRoutingAccount(ctx, bucket)
 	if err != nil {
@@ -89,7 +91,7 @@ func (s *Store) GetSwarmRoutingAccount(ctx context.Context, bucket string) (doma
 	return decodeRoutingAccount(row)
 }
 func decodeRoutingAccount(row gen.SwarmRoutingAccount) (a domain.SwarmRoutingAccount, err error) {
-	if err = json.Unmarshal([]byte(row.PolicyJson), &a.Policy); err != nil {
+	if err := json.Unmarshal([]byte(row.PolicyJson), &a.Policy); err != nil {
 		return a, err
 	}
 	if row.QuotaJson == "" {
@@ -152,6 +154,7 @@ func swarmAdd(dst *int64, value int64) error {
 	return nil
 }
 
+// RecordSwarmUsageReceipt deduplicates receipt and provider response identities while retaining late usage observations.
 func (s *Store) RecordSwarmUsageReceipt(ctx context.Context, in domain.SwarmUsageReceipt) error {
 	if err := domain.ValidateSwarmUsageReceipt(in); err != nil {
 		return err
@@ -181,7 +184,7 @@ func (s *Store) RecordSwarmUsageReceipt(ctx context.Context, in domain.SwarmUsag
 		prior, e = q.GetSwarmResponseReceipt(ctx, gen.GetSwarmResponseReceiptParams{Bucket: u.Bucket, ProviderID: in.ProviderID, ResponseID: in.ResponseID})
 		if e == nil {
 			var old domain.SwarmUsageReceipt
-			if e = json.Unmarshal([]byte(prior.RecordJson), &old); e != nil {
+			if e := json.Unmarshal([]byte(prior.RecordJson), &old); e != nil {
 				return e
 			}
 			old.ID = in.ID // transport redelivery may have a new receipt ID
@@ -197,7 +200,7 @@ func (s *Store) RecordSwarmUsageReceipt(ctx context.Context, in domain.SwarmUsag
 		if e != nil {
 			return e
 		}
-		if e = swarmAdd(&observed, domain.SwarmReceiptTokens(in)); e != nil {
+		if e := swarmAdd(&observed, domain.SwarmReceiptTokens(in)); e != nil {
 			return e
 		}
 		// Late observations are retained even if they contradict final totals.
@@ -214,16 +217,17 @@ func swarmObservedAttempt(ctx context.Context, q *gen.Queries, id string) (int64
 	var total int64
 	for _, r := range rows {
 		var v domain.SwarmUsageReceipt
-		if err = json.Unmarshal([]byte(r.RecordJson), &v); err != nil {
+		if err := json.Unmarshal([]byte(r.RecordJson), &v); err != nil {
 			return 0, err
 		}
-		if err = swarmAdd(&total, domain.SwarmReceiptTokens(v)); err != nil {
+		if err := swarmAdd(&total, domain.SwarmReceiptTokens(v)); err != nil {
 			return 0, err
 		}
 	}
 	return total, nil
 }
 
+// GetSwarmUsageReport reads a consistent projection of reserved and observed usage.
 // Settled is the authoritative final total; Observed is response evidence and
 // must not be added to it. Reserved includes observed overruns of open totals.
 func (s *Store) GetSwarmUsageReport(ctx context.Context, bucket string) (out domain.SwarmUsageReport, err error) {
@@ -243,7 +247,7 @@ func swarmUsageProjection(ctx context.Context, q *gen.Queries, bucket string) (d
 		return out, scopes, swarmErr(err)
 	}
 	var p domain.SwarmRoutingPolicy
-	if err = json.Unmarshal([]byte(account.PolicyJson), &p); err != nil {
+	if err := json.Unmarshal([]byte(account.PolicyJson), &p); err != nil {
 		return out, scopes, err
 	}
 	out.Premium.Limit = p.PremiumTokenLimit
@@ -258,14 +262,14 @@ func swarmUsageProjection(ctx context.Context, q *gen.Queries, bucket string) (d
 	byAttempt := map[string][]domain.SwarmUsageReceipt{}
 	for _, row := range receipts {
 		var r domain.SwarmUsageReceipt
-		if err = json.Unmarshal([]byte(row.RecordJson), &r); err != nil {
+		if err := json.Unmarshal([]byte(row.RecordJson), &r); err != nil {
 			return out, scopes, err
 		}
 		byAttempt[r.AttemptID] = append(byAttempt[r.AttemptID], r)
 	}
 	for _, row := range rows {
 		var a domain.SwarmAttempt
-		if err = json.Unmarshal([]byte(row.SpecJson), &a); err != nil {
+		if err := json.Unmarshal([]byte(row.SpecJson), &a); err != nil {
 			return out, scopes, err
 		}
 		if a.Routing == nil {
@@ -276,7 +280,7 @@ func swarmUsageProjection(ctx context.Context, q *gen.Queries, bucket string) (d
 		}
 		x := domain.SwarmUsageTotals{}
 		for _, r := range byAttempt[row.AttemptID] {
-			if err = swarmAdd(&x.Observed, domain.SwarmReceiptTokens(r)); err != nil {
+			if err := swarmAdd(&x.Observed, domain.SwarmReceiptTokens(r)); err != nil {
 				return out, scopes, err
 			}
 			if r.InputTokens == nil || r.OutputTokens == nil {
@@ -296,16 +300,16 @@ func swarmUsageProjection(ctx context.Context, q *gen.Queries, bucket string) (d
 				x.UnsettledAttempts = 1
 			}
 		}
-		if err = addSwarmTotals(&out.Total, x); err != nil {
+		if err := addSwarmTotals(&out.Total, x); err != nil {
 			return out, scopes, err
 		}
 		if a.Routing.Premium {
-			if err = addSwarmTotals(&out.Premium, x); err != nil {
+			if err := addSwarmTotals(&out.Premium, x); err != nil {
 				return out, scopes, err
 			}
 		}
 		scope := scopes[a.Routing.QuotaScope]
-		if err = addSwarmTotals(&scope, x); err != nil {
+		if err := addSwarmTotals(&scope, x); err != nil {
 			return out, scopes, err
 		}
 		scopes[a.Routing.QuotaScope] = scope

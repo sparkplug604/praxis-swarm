@@ -16,7 +16,7 @@ import (
 // false, including recovery after expiry or cancellation, and never relaunches.
 // This trusted coordinator API validates bindings, not permission enforcement.
 func (s *Store) AuthorizeSwarmExecution(ctx context.Context, f domain.SwarmFence, r domain.SwarmExecutionReceipt, now time.Time) (authorized bool, err error) {
-	if err = domain.ValidateSwarmExecutionReceipt(r); err != nil {
+	if err := domain.ValidateSwarmExecutionReceipt(r); err != nil {
 		return false, err
 	}
 	if now.IsZero() || f.AttemptID != r.AttemptID || f.Owner != r.Owner || f.Generation != r.Generation {
@@ -42,7 +42,7 @@ func (s *Store) AuthorizeSwarmExecution(ctx context.Context, f domain.SwarmFence
 		if e != nil {
 			return e
 		}
-		if e = swarmFence(a, f, now); e != nil {
+		if e := swarmFence(a, f, now); e != nil {
 			return e
 		}
 		if a.State != "dispatching" || a.Schedule == nil {
@@ -94,6 +94,7 @@ func (s *Store) AuthorizeSwarmExecution(ctx context.Context, f domain.SwarmFence
 	return authorized, err
 }
 
+// GetSwarmExecution reads the persisted launch authorization receipt without granting another launch.
 func (s *Store) GetSwarmExecution(ctx context.Context, attemptID string) (r domain.SwarmExecutionReceipt, err error) {
 	if !domain.SwarmValidID(attemptID) {
 		return r, domain.ErrSwarmInvalid
@@ -131,7 +132,7 @@ func (s *Store) RecordSwarmExecutionResult(ctx context.Context, r domain.SwarmEx
 			return domain.ErrSwarmConflict
 		}
 		var receipt domain.SwarmExecutionReceipt
-		if err = json.Unmarshal([]byte(row.ReceiptJson), &receipt); err != nil {
+		if err := json.Unmarshal([]byte(row.ReceiptJson), &receipt); err != nil {
 			return err
 		}
 		if r.CreatedAt.Before(receipt.CreatedAt) {
@@ -143,6 +144,7 @@ func (s *Store) RecordSwarmExecutionResult(ctx context.Context, r domain.SwarmEx
 	})
 }
 
+// GetSwarmExecutionResult reads a persisted runtime observation; a missing result is not proof of no effect.
 func (s *Store) GetSwarmExecutionResult(ctx context.Context, attemptID string) (r domain.SwarmExecutionResult, err error) {
 	if !domain.SwarmValidID(attemptID) {
 		return r, domain.ErrSwarmInvalid

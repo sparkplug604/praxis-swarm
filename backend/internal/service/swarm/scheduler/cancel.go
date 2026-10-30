@@ -59,7 +59,7 @@ func (s *Service) Cancel(ctx context.Context, id string) error {
 	if a.ID != id {
 		return domain.ErrSwarmConflict
 	}
-	if err = cancellationAuthority(ctx, s.Store, a, s.now); err != nil {
+	if err := cancellationAuthority(ctx, s.Store, a, s.now); err != nil {
 		return err
 	}
 	observed, err := stopper.Stop(ctx, a)
@@ -95,13 +95,13 @@ func (r *ExactRuntime) Stop(ctx context.Context, a domain.SwarmAttempt) (Observa
 	if err != nil {
 		return unknown, errors.Join(qualification.ErrUnverified, err)
 	}
-	if err = validateExactExecution(a, receipt, result); err != nil {
+	if err := validateExactExecution(a, receipt, result); err != nil {
 		return unknown, err
 	}
 	if result.Outcome == "no_effect" {
 		// A durable final no_effect result consumes the single-use authorization;
 		// unlike an absent receipt/probe, it rules out a pending or future Start.
-		if err = cancellationAuthority(ctx, authority, a, r.now); err != nil {
+		if err := cancellationAuthority(ctx, authority, a, r.now); err != nil {
 			return unknown, err
 		}
 		return r.Observe(ctx, a)
@@ -116,7 +116,7 @@ func (r *ExactRuntime) Stop(ctx context.Context, a domain.SwarmAttempt) (Observa
 	// Runtime handles are opaque. The immutable result binds this one handle to
 	// the receipt; the stop port checks its session/generation at the effect.
 	ref := ports.FencedRuntimeRef{Handle: ports.RuntimeHandle{ID: result.HandleID}, SessionID: domain.SessionID(receipt.SessionID), Generation: domain.SwarmHash(receipt.OperationID)}
-	if err = cancellationAuthority(ctx, authority, a, r.now); err != nil {
+	if err := cancellationAuthority(ctx, authority, a, r.now); err != nil {
 		return unknown, err
 	}
 	stopped, stopErr := stopper.StopFencedRuntime(ctx, ref)

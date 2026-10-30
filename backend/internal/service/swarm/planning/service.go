@@ -37,7 +37,7 @@ func (s Service) compose(ctx context.Context, runID, attemptID string, dispatch 
 	if s.Tools == nil {
 		return Packet{}, fmt.Errorf("%w: tool verifier required", ErrStale)
 	}
-	if err = s.Tools.Verify(ctx, append([]domain.SwarmToolIdentity(nil), base.Contract.Work.Tools...)); err != nil {
+	if err := s.Tools.Verify(ctx, append([]domain.SwarmToolIdentity(nil), base.Contract.Work.Tools...)); err != nil {
 		return Packet{}, err
 	}
 	subject := Subject{ProjectID: base.ProjectID, RunID: runID, TaskID: base.TaskID, AttemptID: attemptID,

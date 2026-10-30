@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
 	"github.com/aoagents/agent-orchestrator/backend/internal/httpd/apierr"
 	"github.com/aoagents/agent-orchestrator/backend/internal/httpd/apispec"
@@ -13,12 +15,12 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/planning"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/supervised"
 	swarmworkspace "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/workspace"
-	"github.com/go-chi/chi/v5"
 )
 
 // SupervisedSwarmController exposes daemon-owned runs without adding runtime policy.
 type SupervisedSwarmController struct{ Svc supervised.Manager }
 
+// Register mounts the supervised run creation, observation and stop routes.
 func (c *SupervisedSwarmController) Register(r chi.Router) {
 	r.Post("/swarm/runs", c.start)
 	r.Get("/swarm/runs/{runId}", c.get)

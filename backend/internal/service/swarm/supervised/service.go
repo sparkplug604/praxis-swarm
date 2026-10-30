@@ -22,6 +22,8 @@ type execution struct {
 	cancel context.CancelFunc
 	done   chan struct{}
 }
+
+// Service coordinates supervised worker sessions and retains their candidate evidence.
 type Service struct {
 	ctx     context.Context
 	store   Store
@@ -33,10 +35,12 @@ type Service struct {
 	tools   planning.ToolVerifier
 }
 
+// New creates a coordinator whose execution lifetime follows ctx.
 func New(ctx context.Context, store Store, runtime Runtime, root string) *Service {
 	return &Service{ctx: ctx, store: store, runtime: runtime, root: root, active: make(map[string]*execution), poll: 2 * time.Second, tools: planning.FileToolVerifier{}}
 }
 
+// Start validates and records a plan before launching its two isolated workers.
 func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	if !domain.SwarmValidID(in.RequestID) || in.TimeoutSeconds < 10 || in.TimeoutSeconds > 600 {
 		return Run{}, domain.ErrSwarmInvalid
@@ -49,7 +53,7 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	if err != nil {
 		return Run{}, err
 	}
-	if err = planning.ValidateSupervisedPlan(plan); err != nil {
+	if err := planning.ValidateSupervisedPlan(plan); err != nil {
 		return Run{}, err
 	}
 	id := "sao-" + domain.SwarmHash(in.RequestID)[:24]
@@ -89,14 +93,14 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	if err != nil {
 		return Run{}, err
 	}
-	if err = cleanSource(ctx, source, plan.SourceCommit); err != nil {
+	if err := cleanSource(ctx, source, plan.SourceCommit); err != nil {
 		return Run{}, err
 	}
 	dir := filepath.Join(s.root, id)
-	if err = os.MkdirAll(s.root, 0700); err != nil {
+	if err := os.MkdirAll(s.root, 0o700); err != nil {
 		return Run{}, err
 	}
-	if err = os.Mkdir(dir, 0700); err != nil {
+	if err := os.Mkdir(dir, 0o700); err != nil {
 		return Run{}, fmt.Errorf("%w: preserved preparation directory exists or is unavailable", domain.ErrSwarmConflict)
 	}
 	baseline, err := workspace.Capture(ctx, workspace.CaptureRequest{SourceRoot: source, Destination: filepath.Join(dir, "source")})
@@ -105,10 +109,10 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	}
 	run.SourcePath = baseline.Source.Root.Path
 	run.SourceSnapshot = filepath.Join(dir, "source-snapshot.json")
-	if err = saveJSON(run.SourceSnapshot, baseline); err != nil {
+	if err := saveJSON(run.SourceSnapshot, baseline); err != nil {
 		return Run{}, err
 	}
-	if err = workspace.ValidateForLaunch(ctx, baseline); err != nil {
+	if err := workspace.ValidateForLaunch(ctx, baseline); err != nil {
 		return Run{}, err
 	}
 	// Persist both immutable launch intents before either external session start.
@@ -121,7 +125,7 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 		return Run{}, err
 	}
 	if !created {
-		if err = json.Unmarshal(stored, &run); err != nil {
+		if err := json.Unmarshal(stored, &run); err != nil {
 			return Run{}, err
 		}
 		return s.current(run), nil
@@ -130,7 +134,7 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	entry := &execution{run: run, cancel: cancel, done: make(chan struct{})}
 	s.active[id] = entry
 	var response Run
-	if err = json.Unmarshal(data, &response); err != nil {
+	if err := json.Unmarshal(data, &response); err != nil {
 		cancel()
 		delete(s.active, id)
 		return Run{}, err
@@ -147,6 +151,8 @@ func (s *Service) current(run Run) Run {
 	}
 	return run
 }
+
+// Get returns persisted evidence and flags runs no longer owned by this controller.
 func (s *Service) Get(ctx context.Context, id string) (Run, error) {
 	if !domain.SwarmValidID(id) {
 		return Run{}, domain.ErrSwarmInvalid
@@ -158,7 +164,7 @@ func (s *Service) Get(ctx context.Context, id string) (Run, error) {
 		return Run{}, err
 	}
 	var run Run
-	if err = json.Unmarshal(raw, &run); err != nil {
+	if err := json.Unmarshal(raw, &run); err != nil {
 		return Run{}, err
 	}
 	return s.current(run), nil
@@ -184,9 +190,9 @@ func runCopy(entry *execution) Run {
 	entry.mu.Lock()
 	defer entry.mu.Unlock()
 	raw, _ := json.Marshal(entry.run)
-	var copy Run
-	_ = json.Unmarshal(raw, &copy)
-	return copy
+	var snapshot Run
+	_ = json.Unmarshal(raw, &snapshot)
+	return snapshot
 }
 func (s *Service) execute(ctx context.Context, entry *execution) {
 	defer close(entry.done)
@@ -251,7 +257,7 @@ func (s *Service) worker(ctx context.Context, entry *execution, index int) {
 				break
 			}
 			t.Observation = obs
-			if err = set(t); err != nil {
+			if err := set(t); err != nil {
 				entry.cancel()
 				break
 			}
@@ -326,9 +332,10 @@ func (s *Service) finish(entry *execution) {
 		}
 	})
 }
+
+// Stop cancels an active run or reconciles recorded sessions without relaunching them.
 func (s *Service) Stop(ctx context.Context, id string) (Run, error) {
-	run, err := s.Get(ctx, id)
-	if err != nil {
+	if _, err := s.Get(ctx, id); err != nil {
 		return Run{}, err
 	}
 	s.mu.Lock()
@@ -343,7 +350,7 @@ func (s *Service) Stop(ctx context.Context, id string) (Run, error) {
 			return Run{}, ctx.Err()
 		}
 	}
-	run, err = s.Get(ctx, id)
+	run, err := s.Get(ctx, id)
 	if err != nil {
 		return Run{}, err
 	}
@@ -376,6 +383,8 @@ func (s *Service) Stop(ctx context.Context, id string) (Run, error) {
 	s.finish(entry)
 	return s.Get(ctx, id)
 }
+
+// Close cancels active executions and waits a bounded time for each to settle.
 func (s *Service) Close() {
 	s.mu.Lock()
 	entries := make([]*execution, 0, len(s.active))
@@ -397,7 +406,7 @@ func saveJSON(path string, value any) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 	if err != nil {
 		return err
 	}

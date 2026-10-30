@@ -33,14 +33,14 @@ func TestSwarmRunRequestAndNoWait(t *testing.T) {
 	var got swarmStartRequest
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/api/v1/swarm/runs" {
-			w.WriteHeader(204)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
-		if r.Method != "POST" {
+		if r.Method != http.MethodPost {
 			t.Error(r.Method)
 		}
 		_ = json.NewDecoder(r.Body).Decode(&got)
-		w.WriteHeader(202)
+		w.WriteHeader(http.StatusAccepted)
 		_, _ = io.WriteString(w, `{"id":"run-1","status":"running","tasks":[{"id":"a"}],"limits":["supervised"]}`)
 	}))
 	defer srv.Close()
@@ -63,7 +63,7 @@ func TestSwarmRunPollsAndPrintsNeedsAttention(t *testing.T) {
 			gets++
 			_, _ = io.WriteString(w, `{"id":"run-1","status":"needs_attention","errors":["unknown stop"]}`)
 		default:
-			w.WriteHeader(204)
+			w.WriteHeader(http.StatusNoContent)
 		}
 	}))
 	defer srv.Close()
@@ -79,22 +79,22 @@ func TestSwarmGetStopAndAPIError(t *testing.T) {
 		t.Run(action, func(t *testing.T) {
 			cfg := setConfigEnv(t)
 			wantPath := "/api/v1/swarm/runs/run-1"
-			wantMethod := "GET"
+			wantMethod := http.MethodGet
 			if action == "stop" {
 				wantPath += "/stop"
-				wantMethod = "POST"
+				wantMethod = http.MethodPost
 			}
 			fail := false
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if !strings.HasPrefix(r.URL.Path, "/api/v1/swarm/") {
-					w.WriteHeader(204)
+					w.WriteHeader(http.StatusNoContent)
 					return
 				}
 				if r.URL.Path != wantPath || r.Method != wantMethod {
 					t.Errorf("%s %s", r.Method, r.URL.Path)
 				}
 				if fail {
-					w.WriteHeader(409)
+					w.WriteHeader(http.StatusConflict)
 					_, _ = io.WriteString(w, `{"code":"SWARM_CONFLICT","message":"changed input","requestId":"req-7"}`)
 					return
 				}

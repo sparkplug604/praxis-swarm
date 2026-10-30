@@ -11,8 +11,10 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/planning"
 )
 
+// Profile identifies the supervised AO execution contract in retained evidence.
 const Profile = "supervised-ao-v1"
 
+// StartInput supplies a plan, bounded context and a maximum run duration.
 type StartInput struct {
 	RequestID      string                     `json:"requestId"`
 	Plan           json.RawMessage            `json:"plan"`
@@ -20,6 +22,7 @@ type StartInput struct {
 	TimeoutSeconds int                        `json:"timeoutSeconds"`
 }
 
+// Run retains the source baseline, worker outcomes and explicit assurance limits.
 type Run struct {
 	ID              string           `json:"id"`
 	Profile         string           `json:"profile"`
@@ -37,6 +40,7 @@ type Run struct {
 	Limits          []string         `json:"limits"`
 }
 
+// Task binds a launch intent to its observed session and frozen candidate files.
 type Task struct {
 	ID            string                    `json:"id"`
 	RequestID     string                    `json:"requestId"`
@@ -53,6 +57,7 @@ type Task struct {
 	Error         string                    `json:"error,omitempty"`
 }
 
+// Observation records provider-reported settings, usage and completion evidence.
 type Observation struct {
 	Controller        string          `json:"controller"`
 	TurnState         string          `json:"turnState"`
@@ -69,18 +74,21 @@ type Observation struct {
 	ObservedAt        time.Time       `json:"observedAt"`
 }
 
+// Manager exposes the supervised run lifecycle to callers.
 type Manager interface {
 	Start(context.Context, StartInput) (Run, error)
 	Get(context.Context, string) (Run, error)
 	Stop(context.Context, string) (Run, error)
 }
 
+// Store persists idempotent run creation and subsequent evidence updates.
 type Store interface {
 	CreateSupervisedSwarmRun(context.Context, string, string, string, []byte, time.Time) ([]byte, bool, error)
 	GetSupervisedSwarmRun(context.Context, string) ([]byte, error)
 	UpdateSupervisedSwarmRun(context.Context, string, []byte, time.Time) error
 }
 
+// Runtime adapts project workspaces and ordinary AO sessions to the coordinator.
 type Runtime interface {
 	ProjectPath(context.Context, domain.ProjectID) (string, error)
 	Launch(context.Context, domain.ProjectID, string, string, planning.SupervisedPacket) (string, error)

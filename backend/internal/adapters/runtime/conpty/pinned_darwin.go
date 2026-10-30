@@ -293,6 +293,7 @@ func (r *PinnedRuntime) killOwnedHost(addr string) error {
 	return nil
 }
 
+// GetOutput reads diagnostic output only while the pinned registry remains valid.
 func (r *PinnedRuntime) GetOutput(ctx context.Context, handle ports.RuntimeHandle, lines int) (string, error) {
 	if err := r.validateRegistry(); err != nil {
 		return "", err
@@ -300,6 +301,7 @@ func (r *PinnedRuntime) GetOutput(ctx context.Context, handle ports.RuntimeHandl
 	return r.direct.GetOutput(ctx, handle, lines)
 }
 
+// IsAlive reports a live host without treating host absence as confirmed runtime absence.
 func (r *PinnedRuntime) IsAlive(ctx context.Context, handle ports.RuntimeHandle) (bool, error) {
 	if err := r.validateRegistry(); err != nil {
 		return false, errors.Join(ports.ErrRuntimeProbeInconclusive, err)
@@ -370,7 +372,8 @@ func (r *PinnedRuntime) validateHost(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("pinned conpty: read host: %w", err)
 	}
-	defer f.Close()
+	// This handle only reads executable bytes; it has no buffered writes.
+	defer func() { _ = f.Close() }()
 	hash := sha256.New()
 	if _, err := io.Copy(hash, f); err != nil {
 		return fmt.Errorf("pinned conpty: hash host: %w", err)
@@ -388,11 +391,11 @@ func canonicalPinnedPath(path string, directory bool) (os.FileInfo, error) {
 	if path == "" || !filepath.IsAbs(path) || filepath.Clean(path) != path {
 		return nil, errors.New("clean absolute canonical path required")
 	}
-	real, err := filepath.EvalSymlinks(path)
+	canonical, err := filepath.EvalSymlinks(path)
 	if err != nil {
 		return nil, err
 	}
-	if real != path {
+	if canonical != path {
 		return nil, errors.New("symlink or noncanonical path refused")
 	}
 	info, err := os.Stat(path)
@@ -428,4 +431,15 @@ func excludePinnedGlobalDir(dir, home string) error {
 			return nil
 		}
 	}
+}
+
+// explicitUnixEnvironment serializes exactly the supplied environment. An empty
+// non-nil slice is intentional: exec.Cmd treats nil as ambient inheritance.
+func explicitUnixEnvironment(env map[string]string) []string {
+	entries := make([]string, 0, len(env))
+	for key, value := range env {
+		entries = append(entries, key+"="+value)
+	}
+	slices.Sort(entries)
+	return entries
 }

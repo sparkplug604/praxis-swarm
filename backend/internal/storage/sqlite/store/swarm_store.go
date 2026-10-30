@@ -75,6 +75,7 @@ func swarmFence(a domain.SwarmAttempt, f domain.SwarmFence, now time.Time) error
 	return nil
 }
 
+// CreateSwarmRun atomically stores a normalized plan and its initial contracts, or replays the same request.
 func (s *Store) CreateSwarmRun(ctx context.Context, id, requestID string, input domain.SwarmPlan, now time.Time) (out domain.SwarmRun, err error) {
 	p, err := domain.NormalizeSwarmPlan(input)
 	if err != nil {
@@ -101,7 +102,7 @@ func (s *Store) CreateSwarmRun(ctx context.Context, id, requestID string, input 
 		if !errors.Is(e, sql.ErrNoRows) {
 			return e
 		}
-		if e = q.InsertSwarmBudget(ctx, gen.InsertSwarmBudgetParams{Bucket: p.BudgetBucket, TokenLimit: p.TokenLimit}); e != nil {
+		if e := q.InsertSwarmBudget(ctx, gen.InsertSwarmBudgetParams{Bucket: p.BudgetBucket, TokenLimit: p.TokenLimit}); e != nil {
 			return e
 		}
 		budget, e := q.GetSwarmBudget(ctx, p.BudgetBucket)
@@ -111,11 +112,11 @@ func (s *Store) CreateSwarmRun(ctx context.Context, id, requestID string, input 
 		if budget.TokenLimit != p.TokenLimit {
 			return domain.ErrSwarmConflict
 		}
-		if e = q.InsertSwarmRun(ctx, gen.InsertSwarmRunParams{ID: id, RequestID: requestID, RequestHash: hash, ProjectID: string(p.ProjectID), Version: p.Version, PlanJson: swarmJSON(p), IntegrationHead: p.SourceCommit, CreatedNs: now.UnixNano()}); e != nil {
+		if e := q.InsertSwarmRun(ctx, gen.InsertSwarmRunParams{ID: id, RequestID: requestID, RequestHash: hash, ProjectID: string(p.ProjectID), Version: p.Version, PlanJson: swarmJSON(p), IntegrationHead: p.SourceCommit, CreatedNs: now.UnixNano()}); e != nil {
 			return e
 		}
 		for _, t := range p.Tasks {
-			if e = insertSwarmContract(ctx, q, id, t); e != nil {
+			if e := insertSwarmContract(ctx, q, id, t); e != nil {
 				return e
 			}
 		}
@@ -132,6 +133,7 @@ func insertSwarmContract(ctx context.Context, q *gen.Queries, runID string, t do
 	return q.UpsertSwarmTask(ctx, gen.UpsertSwarmTaskParams{RunID: runID, TaskID: t.ID, Version: t.Version})
 }
 
+// GetSwarmRun returns the persisted plan, cancellation flag and integration head.
 func (s *Store) GetSwarmRun(ctx context.Context, id string) (domain.SwarmRun, error) {
 	r, err := s.qr.GetSwarmRun(ctx, id)
 	if err != nil {
@@ -140,6 +142,7 @@ func (s *Store) GetSwarmRun(ctx context.Context, id string) (domain.SwarmRun, er
 	return swarmRun(r)
 }
 
+// ListSwarmRuns returns a bounded project run history in creation order.
 func (s *Store) ListSwarmRuns(ctx context.Context, projectID domain.ProjectID, limit int64) ([]domain.SwarmRun, error) {
 	if limit < 1 || limit > 1000 {
 		return nil, domain.ErrSwarmInvalid
@@ -159,7 +162,7 @@ func (s *Store) ListSwarmRuns(ctx context.Context, projectID domain.ProjectID, l
 	return out, nil
 }
 
-// Revising never rewrites old contracts. A changed predecessor requires every
+// ReviseSwarmPlan preserves old contracts. A changed predecessor requires every
 // dependent contract to name the new version; NormalizeSwarmPlan validates that.
 func (s *Store) ReviseSwarmPlan(ctx context.Context, runID string, expected int64, input domain.SwarmPlan) error {
 	p, err := domain.NormalizeSwarmPlan(input)
@@ -203,7 +206,7 @@ func (s *Store) ReviseSwarmPlan(ctx context.Context, runID string, expected int6
 			if (!exists && t.Version != 1) || (exists && t.Version != prior.Version+1) {
 				return domain.ErrSwarmStale
 			}
-			if e = insertSwarmContract(ctx, q, runID, t); e != nil {
+			if e := insertSwarmContract(ctx, q, runID, t); e != nil {
 				return e
 			}
 			delete(previous, t.ID)
@@ -215,6 +218,7 @@ func (s *Store) ReviseSwarmPlan(ctx context.Context, runID string, expected int6
 	})
 }
 
+// ClaimSwarmTask atomically reserves an attempt, resource locks and budget after validating admission.
 func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attemptID, operationID string, now, leaseUntil time.Time) (out domain.SwarmAttempt, err error) {
 	if !domain.SwarmValidID(c.RunID) || !domain.SwarmValidID(c.TaskID) || !domain.SwarmValidID(c.RequestID) || !domain.SwarmValidID(c.Owner) || c.Version < 1 ||
 		!domain.SwarmValidID(attemptID) || !domain.SwarmValidID(operationID) || !domain.SwarmValidID(c.Resolved.Model) || !domain.SwarmValidID(string(c.Resolved.Harness)) ||
@@ -271,7 +275,7 @@ func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attempt
 			return e
 		}
 		var t domain.SwarmTaskContract
-		if e = json.Unmarshal([]byte(contract.ContractJson), &t); e != nil {
+		if e := json.Unmarshal([]byte(contract.ContractJson), &t); e != nil {
 			return e
 		}
 		for _, dep := range t.Dependencies {
@@ -290,7 +294,7 @@ func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attempt
 		if active >= run.Plan.MaxActive {
 			return domain.ErrSwarmCapacity
 		}
-		if e = checkSwarmSchedule(ctx, q, c, t, run); e != nil {
+		if e := checkSwarmSchedule(ctx, q, c, t, run); e != nil {
 			return e
 		}
 		resources := swarmClaimResources(t, c.Schedule)
@@ -311,7 +315,7 @@ func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attempt
 		if e != nil {
 			return e
 		}
-		if e = checkSwarmRoute(ctx, q, c, t, run.Plan.BudgetBucket, now); e != nil {
+		if e := checkSwarmRoute(ctx, q, c, t, run.Plan.BudgetBucket, now); e != nil {
 			return e
 		}
 		if budget.Spent > budget.TokenLimit || budget.Reserved > budget.TokenLimit-budget.Spent || t.ReserveTokens > budget.TokenLimit-budget.Spent-budget.Reserved {
@@ -327,14 +331,14 @@ func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attempt
 		out = domain.SwarmAttempt{ID: attemptID, RunID: c.RunID, TaskID: c.TaskID, RequestID: c.RequestID, OperationID: operationID, BaseCommit: run.IntegrationHead, Contract: t, ContractHash: contract.ContractHash, Resolved: c.Resolved, CapabilityFingerprint: c.CapabilityFingerprint, State: "reserved", Owner: c.Owner, Generation: 1, LeaseUntil: leaseUntil.UTC(), CreatedAt: now.UTC()}
 		out.Routing = c.Routing
 		out.Schedule = c.Schedule
-		if e = q.InsertSwarmAttempt(ctx, gen.InsertSwarmAttemptParams{ID: out.ID, RunID: out.RunID, TaskID: out.TaskID, Version: t.Version, RequestID: out.RequestID, RequestHash: hash, OperationID: out.OperationID, SpecJson: swarmJSON(out), Owner: out.Owner, LeaseNs: out.LeaseUntil.UnixNano(), CreatedNs: out.CreatedAt.UnixNano()}); e != nil {
+		if e := q.InsertSwarmAttempt(ctx, gen.InsertSwarmAttemptParams{ID: out.ID, RunID: out.RunID, TaskID: out.TaskID, Version: t.Version, RequestID: out.RequestID, RequestHash: hash, OperationID: out.OperationID, SpecJson: swarmJSON(out), Owner: out.Owner, LeaseNs: out.LeaseUntil.UnixNano(), CreatedNs: out.CreatedAt.UnixNano()}); e != nil {
 			return e
 		}
-		if e = reserveSwarmSchedule(ctx, q, out, run.Plan.ProjectID); e != nil {
+		if e := reserveSwarmSchedule(ctx, q, out, run.Plan.ProjectID); e != nil {
 			return e
 		}
 		for _, r := range resources {
-			if e = q.InsertSwarmResource(ctx, gen.InsertSwarmResourceParams{AttemptID: out.ID, Namespace: r.Namespace, Kind: r.Kind, ResourceKey: r.Key}); e != nil {
+			if e := q.InsertSwarmResource(ctx, gen.InsertSwarmResourceParams{AttemptID: out.ID, Namespace: r.Namespace, Kind: r.Kind, ResourceKey: r.Key}); e != nil {
 				return e
 			}
 		}
@@ -343,10 +347,12 @@ func (s *Store) ClaimSwarmTask(ctx context.Context, c domain.SwarmClaim, attempt
 	return out, err
 }
 
+// GetSwarmAttempt reads the current durable attempt facts and lease.
 func (s *Store) GetSwarmAttempt(ctx context.Context, id string) (domain.SwarmAttempt, error) {
 	return loadSwarmAttempt(ctx, s.qr, id)
 }
 
+// GetSwarmAttemptByRequest resolves a logical claim request without creating another attempt.
 func (s *Store) GetSwarmAttemptByRequest(ctx context.Context, id string) (domain.SwarmAttempt, error) {
 	if !domain.SwarmValidID(id) {
 		return domain.SwarmAttempt{}, domain.ErrSwarmInvalid
@@ -358,7 +364,7 @@ func (s *Store) GetSwarmAttemptByRequest(ctx context.Context, id string) (domain
 	return swarmAttempt(r)
 }
 
-// These polling reads expose preserved evidence without fabricating AO CDC
+// GetSwarmContract reads a preserved contract version without fabricating AO CDC
 // events. A later UI transport can add pagination/change notifications.
 func (s *Store) GetSwarmContract(ctx context.Context, runID, taskID string, version int64) (domain.SwarmTaskContract, error) {
 	r, err := s.qr.GetSwarmContract(ctx, gen.GetSwarmContractParams{RunID: runID, TaskID: taskID, Version: version})
@@ -370,6 +376,7 @@ func (s *Store) GetSwarmContract(ctx context.Context, runID, taskID string, vers
 	return out, err
 }
 
+// ListSwarmEvidence returns the preserved review and evaluation records for an attempt.
 func (s *Store) ListSwarmEvidence(ctx context.Context, attemptID string) ([]domain.SwarmEvidence, error) {
 	rows, err := s.qr.ListSwarmEvidence(ctx, attemptID)
 	if err != nil {
@@ -386,6 +393,7 @@ func (s *Store) ListSwarmEvidence(ctx context.Context, attemptID string) ([]doma
 	return out, nil
 }
 
+// GetSwarmIntegration reads the recorded combined acceptance and Git integration evidence.
 func (s *Store) GetSwarmIntegration(ctx context.Context, id string) (domain.SwarmIntegration, error) {
 	r, err := s.qr.GetSwarmIntegration(ctx, id)
 	if err != nil {
@@ -396,6 +404,7 @@ func (s *Store) GetSwarmIntegration(ctx context.Context, id string) (domain.Swar
 	return out, err
 }
 
+// ListSwarmAttempts returns all attempts for a run in creation order.
 func (s *Store) ListSwarmAttempts(ctx context.Context, runID string) ([]domain.SwarmAttempt, error) {
 	rows, e := s.qr.ListSwarmAttempts(ctx, runID)
 	if e != nil {
@@ -403,6 +412,8 @@ func (s *Store) ListSwarmAttempts(ctx context.Context, runID string) ([]domain.S
 	}
 	return swarmAttempts(rows)
 }
+
+// ListSwarmDispatches returns a bounded set of reserved, dispatching and running attempts for reconciliation.
 func (s *Store) ListSwarmDispatches(ctx context.Context, limit int64) ([]domain.SwarmAttempt, error) {
 	if limit < 1 || limit > 1000 {
 		return nil, domain.ErrSwarmInvalid
@@ -433,7 +444,7 @@ func (s *Store) BeginSwarmDispatch(ctx context.Context, f domain.SwarmFence, now
 		if e != nil {
 			return e
 		}
-		if e = swarmFence(a, f, now); e != nil {
+		if e := swarmFence(a, f, now); e != nil {
 			return e
 		}
 		r, e := q.GetSwarmRun(ctx, a.RunID)
@@ -448,7 +459,7 @@ func (s *Store) BeginSwarmDispatch(ctx context.Context, f domain.SwarmFence, now
 			return nil
 		}
 		a.State = "dispatching"
-		if e = saveSwarmFacts(ctx, q, a); e != nil {
+		if e := saveSwarmFacts(ctx, q, a); e != nil {
 			return e
 		}
 		out = a
@@ -458,9 +469,10 @@ func (s *Store) BeginSwarmDispatch(ctx context.Context, f domain.SwarmFence, now
 	if err != nil {
 		launch = false
 	}
-	return
+	return out, launch, err
 }
 
+// TakeOverSwarmLease transfers an expired lease and advances its generation without authorizing another launch.
 func (s *Store) TakeOverSwarmLease(ctx context.Context, f domain.SwarmFence, newOwner string, now, until time.Time) (out domain.SwarmAttempt, err error) {
 	if !domain.SwarmValidID(newOwner) || !until.After(now) {
 		return out, domain.ErrSwarmInvalid
@@ -485,6 +497,7 @@ func (s *Store) TakeOverSwarmLease(ctx context.Context, f domain.SwarmFence, new
 	return
 }
 
+// RenewSwarmLease extends a current fenced lease without changing its owner or generation.
 func (s *Store) RenewSwarmLease(ctx context.Context, f domain.SwarmFence, now, until time.Time) error {
 	if !until.After(now) {
 		return domain.ErrSwarmInvalid
@@ -494,7 +507,7 @@ func (s *Store) RenewSwarmLease(ctx context.Context, f domain.SwarmFence, now, u
 		if e != nil {
 			return e
 		}
-		if e = swarmFence(a, f, now); e != nil {
+		if e := swarmFence(a, f, now); e != nil {
 			return e
 		}
 		if a.State != "reserved" && a.State != "dispatching" && a.State != "running" && a.State != "submitted" {
@@ -519,7 +532,7 @@ func (s *Store) ConfirmSwarmRunning(ctx context.Context, f domain.SwarmFence, se
 		if e != nil {
 			return e
 		}
-		if e = swarmFence(a, f, now); e != nil {
+		if e := swarmFence(a, f, now); e != nil {
 			return e
 		}
 		if a.State != "dispatching" && a.State != "running" {
@@ -540,7 +553,7 @@ func (s *Store) ConfirmSwarmRunning(ctx context.Context, f domain.SwarmFence, se
 	})
 }
 
-// Finish requires coordinator-confirmed runtime stop/absence. Worker self-report
+// FinishSwarmAttempt requires coordinator-confirmed runtime stop/absence. Worker self-report
 // is insufficient. Unknown usage stays reserved after resources are released.
 func (s *Store) FinishSwarmAttempt(ctx context.Context, f domain.SwarmFence, state, commit string, confirmedStopped bool, now time.Time) error {
 	if !confirmedStopped || (state != "submitted" && state != "failed" && state != "cancelled") || (state == "submitted" && !domain.SwarmValidHash(commit, true)) || (state != "submitted" && commit != "") {
@@ -551,7 +564,7 @@ func (s *Store) FinishSwarmAttempt(ctx context.Context, f domain.SwarmFence, sta
 		if e != nil {
 			return e
 		}
-		if e = swarmFence(a, f, now); e != nil {
+		if e := swarmFence(a, f, now); e != nil {
 			return e
 		}
 		if a.State == state && (state != "submitted" || a.SubmissionCommit == commit) {
@@ -574,13 +587,14 @@ func (s *Store) FinishSwarmAttempt(ctx context.Context, f domain.SwarmFence, sta
 		if state == "submitted" {
 			a.SubmissionCommit = commit
 		} // Failed/cancelled submissions retain their frozen Git evidence.
-		if e = saveSwarmFacts(ctx, q, a); e != nil {
+		if e := saveSwarmFacts(ctx, q, a); e != nil {
 			return e
 		}
 		return q.ReleaseSwarmResources(ctx, a.ID)
 	})
 }
 
+// CancelSwarmRun records cancellation intent; it does not stop runtimes or release reservations.
 func (s *Store) CancelSwarmRun(ctx context.Context, id string) error {
 	return s.swarmWrite(ctx, func(q *gen.Queries) error {
 		if _, e := q.GetSwarmRun(ctx, id); e != nil {
@@ -590,6 +604,7 @@ func (s *Store) CancelSwarmRun(ctx context.Context, id string) error {
 	})
 }
 
+// GetSwarmBudget returns the bucket limit, outstanding reservations and settled token total.
 func (s *Store) GetSwarmBudget(ctx context.Context, bucket string) (domain.SwarmBudget, error) {
 	b, e := s.qr.GetSwarmBudget(ctx, bucket)
 	if e != nil {
@@ -598,6 +613,7 @@ func (s *Store) GetSwarmBudget(ctx context.Context, bucket string) (domain.Swarm
 	return domain.SwarmBudget{Bucket: b.Bucket, Limit: b.TokenLimit, Reserved: b.Reserved, Spent: b.Spent}, nil
 }
 
+// SettleSwarmUsage records a terminal attempt's final usage and settles its reservation, preserving overruns.
 func (s *Store) SettleSwarmUsage(ctx context.Context, in domain.SwarmUsage) error {
 	if !domain.SwarmValidID(in.ReceiptID) || in.ActualTokens < 0 {
 		return domain.ErrSwarmInvalid
@@ -634,7 +650,7 @@ func (s *Store) SettleSwarmUsage(ctx context.Context, in domain.SwarmUsage) erro
 		if b.Reserved < u.Reserved || in.ActualTokens > math.MaxInt64-b.Spent {
 			return domain.ErrSwarmInvalid
 		}
-		if e = q.SettleSwarmUsage(ctx, gen.SettleSwarmUsageParams{Actual: in.ActualTokens, ReceiptID: sql.NullString{String: in.ReceiptID, Valid: true}, AttemptID: in.AttemptID}); e != nil {
+		if e := q.SettleSwarmUsage(ctx, gen.SettleSwarmUsageParams{Actual: in.ActualTokens, ReceiptID: sql.NullString{String: in.ReceiptID, Valid: true}, AttemptID: in.AttemptID}); e != nil {
 			return e
 		}
 		// Actual overrun is retained honestly; it blocks future admission rather
@@ -643,6 +659,7 @@ func (s *Store) SettleSwarmUsage(ctx context.Context, in domain.SwarmUsage) erro
 	})
 }
 
+// RecordSwarmEvidence stores idempotent independent review or evaluation evidence bound to a submitted candidate.
 func (s *Store) RecordSwarmEvidence(ctx context.Context, in domain.SwarmEvidence) error {
 	if !domain.SwarmValidID(in.ID) || !domain.SwarmValidID(in.ActorID) || (in.Kind != "review" && in.Kind != "evaluation") ||
 		(in.Verdict != "pass" && in.Verdict != "fail" && in.Verdict != "inconclusive") || !domain.SwarmValidHash(in.ArtifactHash, false) {
@@ -725,7 +742,7 @@ func (s *Store) AcceptSwarmIntegration(ctx context.Context, in domain.SwarmInteg
 			reviewer, evaluator := "", ""
 			for _, row := range proofs {
 				var proof domain.SwarmEvidence
-				if e = json.Unmarshal([]byte(row.RecordJson), &proof); e != nil {
+				if e := json.Unmarshal([]byte(row.RecordJson), &proof); e != nil {
 					return e
 				}
 				if proof.Verdict != "pass" {
@@ -741,14 +758,14 @@ func (s *Store) AcceptSwarmIntegration(ctx context.Context, in domain.SwarmInteg
 				return domain.ErrSwarmNotReady
 			}
 			a.State = "accepted"
-			if e = saveSwarmFacts(ctx, q, a); e != nil {
+			if e := saveSwarmFacts(ctx, q, a); e != nil {
 				return e
 			}
-			if e = q.AcceptSwarmTask(ctx, gen.AcceptSwarmTaskParams{AcceptedAttempt: id, RunID: in.RunID, TaskID: a.TaskID, Version: a.Contract.Version}); e != nil {
+			if e := q.AcceptSwarmTask(ctx, gen.AcceptSwarmTaskParams{AcceptedAttempt: id, RunID: in.RunID, TaskID: a.TaskID, Version: a.Contract.Version}); e != nil {
 				return e
 			}
 		}
-		if e = q.InsertSwarmIntegration(ctx, gen.InsertSwarmIntegrationParams{ID: in.ID, RunID: in.RunID, RecordJson: swarmJSON(in)}); e != nil {
+		if e := q.InsertSwarmIntegration(ctx, gen.InsertSwarmIntegrationParams{ID: in.ID, RunID: in.RunID, RecordJson: swarmJSON(in)}); e != nil {
 			return e
 		}
 		return q.UpdateSwarmIntegrationHead(ctx, gen.UpdateSwarmIntegrationHeadParams{IntegrationHead: in.Commit, ID: in.RunID})

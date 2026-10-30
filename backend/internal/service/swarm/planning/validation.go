@@ -149,7 +149,7 @@ func ValidateWork(task domain.SwarmTaskContract) error {
 	if work.ContextByteLimit < 1 || work.ContextByteLimit > MaxPacketBytes {
 		return bad("contextByteLimit must be 1..%d", MaxPacketBytes)
 	}
-	if err := planningStrings(work.NonGoals, 1, 128, 4096); err != nil {
+	if err := planningStrings(work.NonGoals, 1, 4096); err != nil {
 		return bad("nonGoals: %v", err)
 	}
 	if len(work.Interfaces) == 0 || len(work.Interfaces) > 128 || len(work.Errors) == 0 || len(work.Errors) > 128 {
@@ -182,7 +182,7 @@ func ValidateWork(task domain.SwarmTaskContract) error {
 			return bad("incomplete or duplicate interface %q", contract.ID)
 		}
 		interfaces[contract.ID] = true
-		if err := planningStrings(contract.ErrorRuleIDs, 1, 128, 256); err != nil {
+		if err := planningStrings(contract.ErrorRuleIDs, 1, 256); err != nil {
 			return bad("interface %q errorRuleIds: %v", contract.ID, err)
 		}
 		for _, id := range contract.ErrorRuleIDs {
@@ -286,7 +286,7 @@ func planningValidateContextRef(ref domain.SwarmContextRef) error {
 		return planningInvalid("invalid context kind %q", ref.Kind)
 	}
 	for _, dimension := range [][]string{ref.Selectors.TaskTypes, ref.Selectors.Backends} {
-		if err := planningStrings(dimension, 0, 128, 256); err != nil {
+		if err := planningStrings(dimension, 0, 256); err != nil {
 			return planningInvalid("context selectors: %v", err)
 		}
 		for _, item := range dimension {
@@ -295,7 +295,7 @@ func planningValidateContextRef(ref domain.SwarmContextRef) error {
 			}
 		}
 	}
-	if err := planningStrings(ref.Selectors.Paths, 0, 128, 4096); err != nil {
+	if err := planningStrings(ref.Selectors.Paths, 0, 4096); err != nil {
 		return planningInvalid("context paths: %v", err)
 	}
 	for _, selector := range ref.Selectors.Paths {
@@ -329,7 +329,8 @@ func planningOptionalText(value string, limit int) bool {
 	return len(value) <= limit && utf8.ValidString(value) && !strings.ContainsRune(value, '\x00')
 }
 
-func planningStrings(values []string, minimum, maximum, textLimit int) error {
+func planningStrings(values []string, minimum, textLimit int) error {
+	const maximum = 128
 	if len(values) < minimum || len(values) > maximum {
 		return fmt.Errorf("requires %d..%d entries", minimum, maximum)
 	}

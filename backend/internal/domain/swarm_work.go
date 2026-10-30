@@ -18,6 +18,7 @@ type SwarmWorkSpec struct {
 	OnBlocked        string              `json:"onBlocked"`  // report_and_stop
 }
 
+// SwarmInterface binds an owned interface contract to its exact error rules.
 type SwarmInterface struct {
 	ID           string   `json:"id"`
 	Contract     string   `json:"contract"`
@@ -25,6 +26,7 @@ type SwarmInterface struct {
 	ErrorRuleIDs []string `json:"errorRuleIds"`
 }
 
+// SwarmErrorRule specifies an exact error signal and its mutation consequences.
 type SwarmErrorRule struct {
 	ID          string `json:"id"`
 	When        string `json:"when"`
@@ -34,11 +36,13 @@ type SwarmErrorRule struct {
 	Effect      string `json:"effect"`      // explicit rollback/partial mutation semantics
 }
 
+// SwarmAcceptance names the oracle and checks required for independent acceptance.
 type SwarmAcceptance struct {
 	OracleID string                 `json:"oracleId"`
 	Checks   []SwarmAcceptanceCheck `json:"checks"`
 }
 
+// SwarmAcceptanceCheck describes a bounded command and its expected outcome.
 type SwarmAcceptanceCheck struct {
 	ID               string   `json:"id"`
 	Command          []string `json:"command"` // argv, never executed by composition
@@ -47,6 +51,7 @@ type SwarmAcceptanceCheck struct {
 	ErrorRuleID      string   `json:"errorRuleId,omitempty"`
 }
 
+// SwarmToolIdentity records a canonical executable path, content hash and supplied version.
 type SwarmToolIdentity struct {
 	Name    string `json:"name"`
 	Path    string `json:"path"` // absolute canonical executable/interpreter path
@@ -54,6 +59,7 @@ type SwarmToolIdentity struct {
 	Version string `json:"version"`
 }
 
+// SwarmContextRef binds required or optional context to a hash and applicability selectors.
 type SwarmContextRef struct {
 	ID        string                `json:"id"`
 	Kind      string                `json:"kind"` // spec, source_manifest, reference, lesson, pattern
@@ -62,7 +68,7 @@ type SwarmContextRef struct {
 	Selectors SwarmContextSelectors `json:"selectors"`
 }
 
-// Empty dimensions match all; dimensions AND together and alternatives OR.
+// SwarmContextSelectors with empty dimensions match all; dimensions AND together and alternatives OR.
 // Paths are repository-relative logical scopes, never filesystem permissions.
 type SwarmContextSelectors struct {
 	TaskTypes []string `json:"taskTypes"`

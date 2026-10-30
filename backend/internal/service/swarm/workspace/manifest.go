@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/aoagents/agent-orchestrator/backend/internal/process"
 )
 
 func git(ctx context.Context, root string, args ...string) ([]byte, error) {
 	argv := append([]string{"-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-C", root}, args...)
-	cmd := exec.CommandContext(ctx, "git", argv...)
+	cmd := process.CommandContext(ctx, "git", argv...)
 	for _, e := range os.Environ() {
 		key, _, _ := strings.Cut(e, "=")
 		// Preserve configured ignore semantics, including global excludes. Drop
@@ -58,7 +59,8 @@ func manifest(ctx context.Context, source string, ignored []string) (Manifest, e
 	if err != nil {
 		return m, err
 	}
-	defer r.Close()
+	// The root handle is read-only and carries no buffered file writes.
+	defer func() { _ = r.Close() }()
 	if err := requireRepositoryRoot(ctx, m.Root); err != nil {
 		return m, err
 	}
@@ -82,7 +84,7 @@ func manifest(ctx context.Context, source string, ignored []string) (Manifest, e
 	if err != nil {
 		return m, err
 	}
-	if len(strings.TrimSpace(string(shared))) != 0 {
+	if strings.TrimSpace(string(shared)) != "" {
 		return m, fmt.Errorf("%w: split index requires additional recovery inputs", ErrUnsupported)
 	}
 	head, headErr := git(ctx, m.Root.Path, "rev-parse", "--verify", "HEAD")

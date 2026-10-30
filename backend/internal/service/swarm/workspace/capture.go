@@ -40,8 +40,9 @@ func Capture(ctx context.Context, req CaptureRequest) (Snapshot, error) {
 	if err != nil {
 		return s, err
 	}
-	defer p.Close()
-	if err := p.Mkdir(filepath.Base(abs), 0700); err != nil {
+	// Root handles have no buffered file writes; copied files are closed below.
+	defer func() { _ = p.Close() }()
+	if err := p.Mkdir(filepath.Base(abs), 0o700); err != nil {
 		return s, fmt.Errorf("exclusive destination: %w", err)
 	}
 	s.Destination, err = identifyRoot(abs)
@@ -52,12 +53,12 @@ func Capture(ctx context.Context, req CaptureRequest) (Snapshot, error) {
 	if err != nil {
 		return s, err
 	}
-	defer d.Close()
+	defer func() { _ = d.Close() }()
 	source, err := os.OpenRoot(s.Source.Root.Path)
 	if err != nil {
 		return s, err
 	}
-	defer source.Close()
+	defer func() { _ = source.Close() }()
 	for _, e := range s.Source.Entries {
 		if err := ctx.Err(); err != nil {
 			return s, err
@@ -73,7 +74,7 @@ func Capture(ctx context.Context, req CaptureRequest) (Snapshot, error) {
 			return s, fmt.Errorf("%w: source %s", ErrChanged, e.Path)
 		}
 		if e.Directory {
-			if err := d.Mkdir(e.Path, 0700); err != nil {
+			if err := d.Mkdir(e.Path, 0o700); err != nil {
 				return s, err
 			}
 			continue
@@ -154,7 +155,8 @@ func ValidateForLaunch(ctx context.Context, s Snapshot) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
+	// Closing this directory handle cannot flush captured file contents.
+	defer func() { _ = r.Close() }()
 	actual, err := walk(ctx, r, ".")
 	if err != nil {
 		return err
@@ -189,7 +191,8 @@ func ValidateSubmission(ctx context.Context, s Snapshot) (Submission, error) {
 	if err != nil {
 		return result, err
 	}
-	defer r.Close()
+	// Closing this directory handle cannot flush captured file contents.
+	defer func() { _ = r.Close() }()
 	entries, err := walk(ctx, r, ".")
 	if err != nil {
 		return result, err

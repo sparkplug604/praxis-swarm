@@ -67,7 +67,7 @@ func newSwarmCommand(c *commandContext) *cobra.Command {
 		if err = dec.Decode(&supplied); err != nil {
 			return usageError{fmt.Errorf("invalid context JSON: %w", err)}
 		}
-		if err = dec.Decode(new(any)); err != io.EOF {
+		if err = dec.Decode(new(any)); !errors.Is(err, io.EOF) {
 			return usageError{errors.New("--context must contain one JSON array")}
 		}
 		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
@@ -81,7 +81,6 @@ func newSwarmCommand(c *commandContext) *cobra.Command {
 	run.Flags().BoolVar(&wait, "wait", true, "Wait for the final report; interrupting does not stop the run")
 	cmd.AddCommand(run)
 	for _, action := range []string{"get", "stop"} {
-		action := action
 		cmd.AddCommand(&cobra.Command{Use: action + " ID", Short: action + " a supervised run and print its JSON report", Args: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.ContainsAny(args[0], "/?#") {
 				return usageError{errors.New("a single run ID is required")}
@@ -119,7 +118,7 @@ func readSwarmInput(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	data, err := io.ReadAll(io.LimitReader(f, swarmInputLimit+1))
 	if err != nil {
 		return nil, err
@@ -142,7 +141,7 @@ func (c *commandContext) swarmRun(ctx context.Context, input swarmStartRequest, 
 	id := state.ID
 	// Preserve the durable identity on stderr while stdout stays one JSON report.
 	if wait && state.Status == "running" {
-		fmt.Fprintf(c.deps.Err, "Swarm run %s; interrupting this wait does not stop it. Stop with: ao swarm stop %s\n", id, id)
+		_, _ = fmt.Fprintf(c.deps.Err, "Swarm run %s; interrupting this wait does not stop it. Stop with: ao swarm stop %s\n", id, id)
 	}
 	for wait && state.Status == "running" {
 		timer := time.NewTimer(2 * time.Second)
@@ -184,7 +183,7 @@ func (c *commandContext) printSwarmReport(raw json.RawMessage, expectedID string
 	if err != nil {
 		return err
 	}
-	if err = writeJSON(c.deps.Out, raw); err != nil {
+	if err := writeJSON(c.deps.Out, raw); err != nil {
 		return err
 	}
 	if state.Status == "needs_attention" {

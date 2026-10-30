@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -133,17 +132,6 @@ func spawnUnixHost(ctx context.Context, exe, sessionID, cwd string, argv, env []
 	case <-ctx.Done():
 		return failStarted(ctx.Err())
 	}
-}
-
-// explicitUnixEnvironment serializes exactly the supplied environment. An empty
-// non-nil slice is intentional: exec.Cmd treats nil as ambient inheritance.
-func explicitUnixEnvironment(env map[string]string) []string {
-	entries := make([]string, 0, len(env))
-	for key, value := range env {
-		entries = append(entries, key+"="+value)
-	}
-	sort.Strings(entries)
-	return entries
 }
 
 func readUnixSpawnDiagnostics(stderr *os.File) string {

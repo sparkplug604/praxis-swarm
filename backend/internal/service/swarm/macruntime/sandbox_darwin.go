@@ -44,6 +44,7 @@ type pathIdentity struct {
 	Device, Inode uint64
 }
 
+// Sandbox pins an offline diagnostic policy to runtime, tool and root identities.
 type Sandbox struct {
 	options SandboxOptions
 	paths   []pathIdentity
@@ -54,6 +55,7 @@ type Sandbox struct {
 // Never allow all of /System: /System/Volumes/Data aliases writable user data.
 var systemReads = []string{"/System/Library", "/System/Cryptexes", "/System/Volumes/Preboot/Cryptexes", "/usr/lib", "/bin", "/usr/bin"}
 
+// NewSandbox validates diagnostic paths and binds their policy to the pinned runtime.
 func NewSandbox(ctx context.Context, runtime *conpty.PinnedRuntime, options SandboxOptions) (*Sandbox, error) {
 	if runtime == nil {
 		return nil, errors.New("sandbox: explicit pinned runtime required")
@@ -206,8 +208,8 @@ func identify(path string, directory bool) (pathIdentity, error) {
 	if !filepath.IsAbs(path) || filepath.Clean(path) != path || strings.ContainsFunc(path, unicode.IsControl) {
 		return pathIdentity{}, errors.New("sandbox: clean absolute path without control characters required")
 	}
-	real, err := filepath.EvalSymlinks(path)
-	if err != nil || real != path {
+	canonical, err := filepath.EvalSymlinks(path)
+	if err != nil || canonical != path {
 		return pathIdentity{}, errors.New("sandbox: existing canonical path required")
 	}
 	fd, err := syscall.Open(path, syscall.O_RDONLY|syscall.O_NONBLOCK|syscall.O_NOFOLLOW, 0)
@@ -215,7 +217,8 @@ func identify(path string, directory bool) (pathIdentity, error) {
 		return pathIdentity{}, err
 	}
 	f := os.NewFile(uintptr(fd), path)
-	defer f.Close()
+	// The descriptor is read-only, so closing it cannot report pending writes.
+	defer func() { _ = f.Close() }()
 	info, err := f.Stat()
 	if err != nil {
 		return pathIdentity{}, err
@@ -224,7 +227,7 @@ func identify(path string, directory bool) (pathIdentity, error) {
 	if !ok || info.IsDir() != directory || (!directory && (!info.Mode().IsRegular() || info.Mode().Perm()&0o111 == 0)) {
 		return pathIdentity{}, errors.New("sandbox: expected directory or regular executable")
 	}
-	id := pathIdentity{Path: path, Device: uint64(stat.Dev), Inode: stat.Ino}
+	id := pathIdentity{Path: path, Device: deviceIdentity(stat.Dev), Inode: stat.Ino}
 	if !directory {
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
@@ -233,6 +236,16 @@ func identify(path string, directory bool) (pathIdentity, error) {
 		id.SHA256 = hex.EncodeToString(h.Sum(nil))
 	}
 	return id, nil
+}
+
+// deviceIdentity preserves the historical uint64 sign extension of Darwin's
+// signed dev_t, including negative values, without a negative-to-unsigned cast.
+func deviceIdentity(device int32) uint64 {
+	if device >= 0 {
+		return uint64(device)
+	}
+	magnitude := -int64(device)
+	return ^uint64(magnitude - 1)
 }
 
 func overlaps(a, b string) bool {

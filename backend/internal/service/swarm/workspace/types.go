@@ -7,11 +7,15 @@ package workspace
 import "errors"
 
 var (
-	ErrUnsafe      = errors.New("unsafe swarm workspace")
-	ErrChanged     = errors.New("swarm workspace identity or contents changed")
+	// ErrUnsafe reports unsafe paths or file types in a workspace capture.
+	ErrUnsafe = errors.New("unsafe swarm workspace")
+	// ErrChanged reports changed filesystem identities or captured contents.
+	ErrChanged = errors.New("swarm workspace identity or contents changed")
+	// ErrUnsupported reports filesystem features without a supported capture implementation.
 	ErrUnsupported = errors.New("unsupported swarm filesystem")
 )
 
+// CaptureRequest selects a source tree and an exclusive destination for an independent copy.
 type CaptureRequest struct {
 	SourceRoot  string
 	Destination string
@@ -21,12 +25,14 @@ type CaptureRequest struct {
 	IncludeIgnored []string
 }
 
+// RootIdentity binds a requested root to its canonical path and filesystem identity.
 type RootIdentity struct {
 	RequestedPath string `json:"requestedPath"`
 	Path          string `json:"path"`
 	FileID        string `json:"fileId"`
 }
 
+// Entry records a working-tree path, metadata and content identity or explicit absence.
 type Entry struct {
 	Path       string `json:"path"`
 	FileID     string `json:"fileId,omitempty"`
@@ -39,6 +45,7 @@ type Entry struct {
 	Directory  bool   `json:"directory,omitempty"`
 }
 
+// IndexEntry records a Git index path, stage, mode and object identity.
 type IndexEntry struct {
 	Path   string `json:"path"`
 	Mode   string `json:"mode"`
@@ -46,6 +53,7 @@ type IndexEntry struct {
 	Stage  string `json:"stage"`
 }
 
+// Manifest freezes working-file and Git-index facts for preservation checks.
 type Manifest struct {
 	Root               RootIdentity `json:"root"`
 	GitDirectory       RootIdentity `json:"gitDirectory"`
@@ -64,6 +72,7 @@ type Manifest struct {
 	Entries        []Entry      `json:"entries"`
 }
 
+// Snapshot binds the source manifest to the independent destination identity.
 type Snapshot struct {
 	Source       Manifest     `json:"source"`
 	Destination  RootIdentity `json:"destination"`
@@ -71,6 +80,7 @@ type Snapshot struct {
 	IdentityHash string       `json:"identityHash"`
 }
 
+// Submission binds candidate file contents to the captured workspace snapshot.
 type Submission struct {
 	SnapshotHash string       `json:"snapshotHash"`
 	Root         RootIdentity `json:"root"`

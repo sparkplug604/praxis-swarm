@@ -322,6 +322,23 @@ func TestEffortHelpersUseCatalogOrderAndRejectAmbiguity(t *testing.T) {
 	}
 }
 
+func TestClampEffortSelectsKnownValueAtCatalogBoundaries(t *testing.T) {
+	for _, tt := range []struct {
+		order, supported []string
+		current, want    string
+	}{
+		{[]string{"only"}, []string{"only"}, "only", "only"},
+		{[]string{"low", "medium", "high"}, []string{"high"}, "low", "high"},
+		{[]string{"low", "medium", "high"}, []string{"low"}, "high", "low"},
+		{[]string{"low", "medium", "high"}, []string{"high", "medium", "low"}, "medium", "medium"},
+	} {
+		got, err := ClampEffort(tt.order, tt.supported, tt.current)
+		if err != nil || got != tt.want {
+			t.Fatalf("clamp %+v: got %q, %v", tt, got, err)
+		}
+	}
+}
+
 func TestWorstWindowPreservesUnknownAndRejectsInvalidObservations(t *testing.T) {
 	f := newRouteFixture()
 	f.quota.Windows[0].UsedPercent = float64Value(40)

@@ -87,9 +87,10 @@ func clientFencedStop(ctx context.Context, addr string, req FencedStopRequest) (
 		if len(res.Error) > maxFencedStopErrorBytes {
 			return zero, errors.New("fenced stop receipt error is too large")
 		}
-		if (!res.Accepted && (res.Cleanup != string(ports.RuntimeCleanupNotAttempted) || res.Error == "")) ||
-			(res.Accepted && !((res.Cleanup == string(ports.RuntimeCleanupSucceeded) && res.Error == "") ||
-				(res.Cleanup == string(ports.RuntimeCleanupFailed) && res.Error != ""))) {
+		validReceipt := (!res.Accepted && res.Cleanup == string(ports.RuntimeCleanupNotAttempted) && res.Error != "") ||
+			(res.Accepted && ((res.Cleanup == string(ports.RuntimeCleanupSucceeded) && res.Error == "") ||
+				(res.Cleanup == string(ports.RuntimeCleanupFailed) && res.Error != "")))
+		if !validReceipt {
 			return zero, errors.New("inconsistent fenced stop receipt")
 		}
 		return res, nil

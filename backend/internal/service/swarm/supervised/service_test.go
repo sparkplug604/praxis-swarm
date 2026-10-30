@@ -309,15 +309,14 @@ func awaitRun(t *testing.T, s *Service, id string) Run {
 	t.Helper()
 	deadline := time.Now().Add(10 * time.Second)
 	for time.Now().Before(deadline) {
-		run, err := s.Get(context.Background(), id)
-		if err != nil {
+		if _, err := s.Get(context.Background(), id); err != nil {
 			t.Fatal(err)
 		}
 		s.mu.Lock()
 		entry := s.active[id]
 		s.mu.Unlock()
 		if entry == nil {
-			run, err = s.Get(context.Background(), id)
+			run, err := s.Get(context.Background(), id)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -325,7 +324,7 @@ func awaitRun(t *testing.T, s *Service, id string) Run {
 		}
 		select {
 		case <-entry.done:
-			run, err = s.Get(context.Background(), id)
+			run, err := s.Get(context.Background(), id)
 			if err != nil {
 				t.Fatal(err)
 			}

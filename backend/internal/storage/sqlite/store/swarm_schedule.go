@@ -39,6 +39,7 @@ func (s *Store) ConfigureSwarmScheduler(ctx context.Context, p domain.SwarmSched
 	})
 }
 
+// GetSwarmSchedulerPolicy returns the immutable scheduling limits for the named pool.
 func (s *Store) GetSwarmSchedulerPolicy(ctx context.Context, poolID string) (p domain.SwarmSchedulerPolicy, err error) {
 	if !domain.SwarmValidID(poolID) {
 		return p, domain.ErrSwarmInvalid
@@ -73,14 +74,14 @@ func checkSwarmSchedule(ctx context.Context, q *gen.Queries, c domain.SwarmClaim
 	if b == nil {
 		return domain.ErrSwarmNotReady
 	}
-	if err = domain.ValidateSwarmScheduleBinding(*b); err != nil {
+	if err := domain.ValidateSwarmScheduleBinding(*b); err != nil {
 		return err
 	}
 	if b.PoolID != row.PoolID || b.PolicyHash != row.PolicyHash {
 		return domain.ErrSwarmStale
 	}
 	var p domain.SwarmSchedulerPolicy
-	if err = json.Unmarshal([]byte(row.PolicyJson), &p); err != nil {
+	if err := json.Unmarshal([]byte(row.PolicyJson), &p); err != nil {
 		return err
 	}
 	// Resolve account identity from immutable routing configuration; caller keys

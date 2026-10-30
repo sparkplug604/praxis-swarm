@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// One immutable pool governs every new claim in a database. Explicit provider
+// SwarmSchedulerPolicy assigns one immutable pool governing every new claim in a database. Explicit provider
 // and project entries are allowlists; an absent or zero limit admits no work.
 // Every non-reviewer role consumes a worker slot, including planner/integration.
 type SwarmSchedulerPolicy struct {
@@ -17,7 +17,7 @@ type SwarmSchedulerPolicy struct {
 	ProjectLimits  map[string]int64 `json:"projectLimits"`
 }
 
-// Resources supplement the original contract's logical resources. The trusted
+// SwarmScheduleBinding resources supplement the original contract's logical resources. The trusted
 // coordinator resolves filesystem aliases; these keys alone enforce no sandbox.
 // ProviderKey is the routing policy's canonical AccountID, shared across models
 // and harnesses, so changing either cannot evade account concurrency limits.
@@ -31,6 +31,7 @@ type SwarmScheduleBinding struct {
 	Resources             []SwarmResource `json:"resources"`
 }
 
+// ValidateSwarmSchedulerPolicy checks bounded pool limits and explicit account/project allowlists.
 func ValidateSwarmSchedulerPolicy(p SwarmSchedulerPolicy) error {
 	if !SwarmValidID(p.PoolID) || p.MaxWorkers < 0 || p.MaxReviewers < 0 ||
 		p.MaxWorkers > 1000 || p.MaxReviewers > 1000 || (p.MaxWorkers == 0 && p.MaxReviewers == 0) {
@@ -49,6 +50,7 @@ func ValidateSwarmSchedulerPolicy(p SwarmSchedulerPolicy) error {
 	return nil
 }
 
+// ValidateSwarmScheduleBinding checks pinned policy, workspace and resource identities.
 func ValidateSwarmScheduleBinding(b SwarmScheduleBinding) error {
 	if !SwarmValidID(b.PoolID) || !SwarmValidHash(b.PolicyHash, false) ||
 		!SwarmValidID(b.ProviderKey) || !SwarmValidHash(b.SourceManifestHash, false) ||

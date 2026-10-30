@@ -19,7 +19,7 @@ import (
 // independent repositories. Spelling is resolved by device/inode identity, never
 // assumed case or Unicode rules. New paths reserve their nearest existing ancestor
 // because filesystem alias behavior for a nonexistent entry cannot be observed.
-// Internal symlinks are conservatively unsupported, as are any hardlinked files.
+// Internal symlinks are conservatively unsupported, as are any files with multiple hard links.
 func ResolveResources(ctx context.Context, sourceRoot string, resources []domain.SwarmResource) ([]domain.SwarmResource, error) {
 	identity, err := identifyRoot(sourceRoot)
 	if err != nil {
@@ -32,7 +32,8 @@ func ResolveResources(ctx context.Context, sourceRoot string, resources []domain
 	if err != nil {
 		return nil, err
 	}
-	defer r.Close()
+	// Resource resolution only reads directory entries through this handle.
+	defer func() { _ = r.Close() }()
 	set := map[domain.SwarmResource]bool{}
 	for _, resource := range resources {
 		if err := ctx.Err(); err != nil {

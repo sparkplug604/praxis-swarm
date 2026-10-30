@@ -26,6 +26,7 @@ type ExactPreparer struct {
 	Requests      func(context.Context, domain.SwarmAttempt, workspace.Snapshot) (qualification.Request, error)
 }
 
+// Prepare binds the packet and workspace to a fresh qualification request.
 func (p ExactPreparer) Prepare(ctx context.Context, a domain.SwarmAttempt, packet planning.Packet, snapshot workspace.Snapshot) (qualification.Preparation, error) {
 	if p.Requests == nil {
 		return qualification.Preparation{}, qualification.ErrUnverified
@@ -63,6 +64,7 @@ type ExactRuntime struct {
 	Now func() time.Time
 }
 
+// Mode reports test evidence even when the exact bridge uses real helper processes.
 func (*ExactRuntime) Mode() qualification.EvidenceMode { return qualification.TestEvidence }
 func (r *ExactRuntime) now() time.Time {
 	if r.Now != nil {
@@ -72,6 +74,7 @@ func (r *ExactRuntime) now() time.Time {
 }
 func exactSessionID(operation string) string { return "swarm-" + domain.SwarmHash(operation) }
 
+// Start consumes a bound launch receipt without replaying a previously attempted creation.
 func (r *ExactRuntime) Start(ctx context.Context, launch Launch) (Observation, error) {
 	if r.Preparer == nil || r.Composer == nil || r.Launcher.Store == nil || r.Launcher.Runtime == nil {
 		return Observation{}, qualification.ErrUnverified
@@ -168,6 +171,7 @@ func exactLaunch(l Launch, now time.Time) (domain.SwarmExecutionReceipt, ports.R
 	return receipt, cfg, domain.ValidateSwarmExecutionReceipt(receipt)
 }
 
+// Observe reconciles retained execution facts against the exact runtime generation.
 func (r *ExactRuntime) Observe(ctx context.Context, a domain.SwarmAttempt) (Observation, error) {
 	unknown := Observation{OperationID: a.OperationID, State: "unknown"}
 	if r.Launcher.Store == nil || r.Launcher.Runtime == nil {
@@ -190,7 +194,7 @@ func (r *ExactRuntime) Observe(ctx context.Context, a domain.SwarmAttempt) (Obse
 	if err != nil {
 		return unknown, err
 	}
-	if err = validateExactExecution(a, receipt, result); err != nil {
+	if err := validateExactExecution(a, receipt, result); err != nil {
 		return unknown, err
 	}
 	return r.observation(ctx, a, receipt, result), nil

@@ -11,8 +11,10 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 )
 
+// Role identifies a swarm responsibility with distinct qualification requirements.
 type Role string
 
+// Planner, Worker, Reviewer and Integration are supported qualification roles.
 const (
 	Planner     Role = "planner"
 	Worker      Role = "worker"
@@ -21,13 +23,19 @@ const (
 )
 
 var (
-	ErrInvalid           = errors.New("invalid swarm qualification request")
-	ErrUnavailable       = errors.New("selected swarm model unavailable")
-	ErrUnverified        = errors.New("swarm capabilities unverified")
+	// ErrInvalid reports an invalid qualification request.
+	ErrInvalid = errors.New("invalid swarm qualification request")
+	// ErrUnavailable reports a definitively unavailable selected adapter or model.
+	ErrUnavailable = errors.New("selected swarm model unavailable")
+	// ErrUnverified reports missing or insufficient capability evidence.
+	ErrUnverified = errors.New("swarm capabilities unverified")
+	// ErrUnsafePermissions reports unsafe launch permissions or protected roots.
 	ErrUnsafePermissions = errors.New("unsafe swarm permissions")
-	ErrIdentityMismatch  = errors.New("swarm execution identity mismatch")
+	// ErrIdentityMismatch reports execution identity differing from qualification evidence.
+	ErrIdentityMismatch = errors.New("swarm execution identity mismatch")
 )
 
+// Selection requests an explicit agent, model and reasoning effort.
 type Selection struct {
 	AgentID string `json:"agentId"`
 	Model   string `json:"model"`
@@ -39,6 +47,7 @@ type Selection struct {
 // and unknown capability errors never trigger provider substitution.
 type Policy struct{ Fallbacks map[Role][]Selection }
 
+// PermissionRequirements identifies protected storage and any frozen reviewer submission.
 type PermissionRequirements struct {
 	CoordinatorRoot string `json:"coordinatorRoot"`
 	EvaluatorRoot   string `json:"evaluatorRoot"`
@@ -46,6 +55,7 @@ type PermissionRequirements struct {
 	SubmissionSHA256 string `json:"submissionSha256,omitempty"`
 }
 
+// Request combines role, selection, launch configuration and permission requirements.
 type Request struct {
 	Role        Role
 	Requested   Selection
@@ -61,6 +71,7 @@ type Catalog interface {
 	RevalidateModels(context.Context, string, string) (ports.AgentModelCatalog, error)
 }
 
+// RuntimeIdentity binds the executable and effective runtime configuration without raw credentials.
 type RuntimeIdentity struct {
 	BinaryPath   string `json:"binaryPath"`
 	BinarySHA256 string `json:"binarySha256"`
@@ -70,19 +81,24 @@ type RuntimeIdentity struct {
 	ConfigFingerprint string `json:"configFingerprint"`
 }
 
+// RuntimeInspector resolves the executable and configuration identity before qualification.
 type RuntimeInspector interface {
 	Inspect(context.Context, string, ports.LaunchConfig) (RuntimeIdentity, error)
 }
 
+// EvidenceMode separates fixture-based verification from live capability evidence.
 type EvidenceMode string
 
+// TestEvidence and LiveEvidence distinguish fixture results from live verification.
 const (
 	TestEvidence EvidenceMode = "test"
 	LiveEvidence EvidenceMode = "live"
 )
 
+// CheckStatus records a capability result without treating unknown as passed.
 type CheckStatus string
 
+// Passed, Failed, Unknown and Unsupported preserve distinct capability outcomes.
 const (
 	Passed      CheckStatus = "passed"
 	Failed      CheckStatus = "failed"
@@ -90,6 +106,7 @@ const (
 	Unsupported CheckStatus = "unsupported"
 )
 
+// CapabilityChecks records independent settings, cancellation and access-boundary observations.
 type CapabilityChecks struct {
 	SettingsPreserved      CheckStatus `json:"settingsPreserved"`
 	CancellationObserved   CheckStatus `json:"cancellationObserved"`
@@ -110,6 +127,7 @@ type CapabilityEvidence struct {
 	Checks    CapabilityChecks `json:"checks"`
 }
 
+// Probe supplies the exact prepared launch and protected roots to a trusted verifier.
 type Probe struct {
 	Binding     string
 	Role        Role
@@ -120,10 +138,12 @@ type Probe struct {
 	Permissions PermissionRequirements
 }
 
+// PermissionVerifier obtains coordinator-owned capability evidence for a bound launch.
 type PermissionVerifier interface {
 	Verify(context.Context, Probe) (CapabilityEvidence, error)
 }
 
+// Report retains selection, runtime identity and the limits of qualification evidence.
 type Report struct {
 	// CapabilityFingerprint pins the launch profile before composing a task.
 	// Prompt and session identity are excluded to avoid a self-referential packet;
@@ -158,6 +178,7 @@ type Preparation struct {
 	PromptDelivery ports.PromptDeliveryStrategy
 }
 
+// Service prepares exact launches through catalog, runtime and permission checks.
 type Service struct {
 	Catalog     Catalog
 	Agent       func(string) (ports.Agent, error)

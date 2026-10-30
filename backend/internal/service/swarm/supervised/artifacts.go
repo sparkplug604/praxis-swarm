@@ -8,18 +8,18 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
+	"github.com/aoagents/agent-orchestrator/backend/internal/process"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/workspace"
 )
 
 func gitRead(ctx context.Context, root string, args ...string) ([]byte, error) {
 	argv := append([]string{"-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-C", root}, args...)
-	cmd := exec.CommandContext(ctx, "git", argv...)
+	cmd := process.CommandContext(ctx, "git", argv...)
 	for _, item := range os.Environ() {
 		key, _, _ := strings.Cut(item, "=")
 		if !strings.HasPrefix(key, "GIT_") || key == "GIT_CONFIG_GLOBAL" || key == "GIT_CONFIG_SYSTEM" || key == "GIT_CONFIG_NOSYSTEM" {
@@ -66,7 +66,8 @@ func sourceMatches(path, source string) error {
 	if err != nil {
 		return err
 	}
-	defer root.Close()
+	// Closing a read-only directory handle cannot affect the verified contents.
+	defer func() { _ = root.Close() }()
 	for _, entry := range snapshot.Source.Entries {
 		if entry.Missing || entry.Directory {
 			continue
@@ -106,7 +107,7 @@ func content(entries []workspace.Entry) map[string]string {
 		if entry.Missing || entry.Directory {
 			continue
 		}
-		result[entry.Path] = fmt.Sprintf("%t:%d:%s", entry.Mode&0111 != 0, entry.Size, entry.SHA256)
+		result[entry.Path] = fmt.Sprintf("%t:%d:%s", entry.Mode&0o111 != 0, entry.Size, entry.SHA256)
 	}
 	return result
 }
@@ -176,7 +177,7 @@ func (s *Service) claimWorkspace(ctx context.Context, entry *execution, index in
 	if err != nil {
 		return err
 	}
-	if err = s.store.UpdateSupervisedSwarmRun(ctx, run.ID, raw, time.Now().UTC()); err != nil {
+	if err := s.store.UpdateSupervisedSwarmRun(ctx, run.ID, raw, time.Now().UTC()); err != nil {
 		return err
 	}
 	task.WorkspacePath = path
@@ -198,11 +199,11 @@ func (s *Service) freeze(ctx context.Context, run Run, index int, task *Task) er
 		return err
 	}
 	task.SnapshotPath = filepath.Join(dir, "snapshot.json")
-	if err = saveJSON(task.SnapshotPath, snapshot); err != nil {
+	if err := saveJSON(task.SnapshotPath, snapshot); err != nil {
 		return err
 	}
 	task.SnapshotHash = snapshot.ManifestHash
-	if err = workspace.ValidateForLaunch(ctx, snapshot); err != nil {
+	if err := workspace.ValidateForLaunch(ctx, snapshot); err != nil {
 		return err
 	}
 	task.CandidateHash = domain.SwarmHash(content(snapshot.Source.Entries))
@@ -211,12 +212,12 @@ func (s *Service) freeze(ctx context.Context, run Run, index int, task *Task) er
 		return err
 	}
 	task.DiffPath = filepath.Join(dir, "changes.patch")
-	if err = os.WriteFile(task.DiffPath, diff, 0600); err != nil {
+	if err := os.WriteFile(task.DiffPath, diff, 0o600); err != nil {
 		return err
 	}
 	// Recheck after diff generation; retained snapshots contain untracked files
 	// too, whereas Git's tracked-file patch does not.
-	if err = workspace.ValidateForLaunch(ctx, snapshot); err != nil {
+	if err := workspace.ValidateForLaunch(ctx, snapshot); err != nil {
 		return err
 	}
 	baseline, err := loadSnapshot(run.SourceSnapshot)

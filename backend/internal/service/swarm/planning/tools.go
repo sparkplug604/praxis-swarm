@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"github.com/aoagents/agent-orchestrator/backend/internal/domain"
 )
@@ -17,6 +17,7 @@ import (
 // Dispatch must enforce the same identity at use time; this is not a sandbox.
 type FileToolVerifier struct{}
 
+// Verify checks canonical executable files against their recorded content hashes.
 func (FileToolVerifier) Verify(ctx context.Context, identities []domain.SwarmToolIdentity) error {
 	if ctx == nil || len(identities) == 0 || len(identities) > 32 {
 		return ErrInvalid
@@ -47,15 +48,17 @@ func verifyToolFile(ctx context.Context, tool domain.SwarmToolIdentity) error {
 	if err != nil || !info.Mode().IsRegular() {
 		return ErrStale
 	}
-	// NONBLOCK handles replacement with a FIFO between Lstat and open;
-	// NOFOLLOW prevents a final-component symlink substitution.
-	file, err := os.OpenFile(tool.Path, os.O_RDONLY|syscall.O_NONBLOCK|syscall.O_NOFOLLOW, 0)
+	file, err := openToolFile(tool.Path)
 	if err != nil {
+		if errors.Is(err, errors.ErrUnsupported) {
+			return err
+		}
 		return ErrStale
 	}
-	defer file.Close()
+	// The executable is read-only; no buffered writes remain to flush.
+	defer func() { _ = file.Close() }()
 	before, err := file.Stat()
-	if err != nil || !before.Mode().IsRegular() || !os.SameFile(info, before) || before.Mode().Perm()&0111 == 0 || before.Size() > 1024*1024*1024 {
+	if err != nil || !before.Mode().IsRegular() || !os.SameFile(info, before) || before.Mode().Perm()&0o111 == 0 || before.Size() > 1024*1024*1024 {
 		return ErrStale
 	}
 	hash := sha256.New()

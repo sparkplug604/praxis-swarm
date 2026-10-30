@@ -2,6 +2,7 @@ package gitworktree
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -14,14 +15,17 @@ import (
 // retained for inspection; it never resumes a branch created by another call.
 func (w *Workspace) createPinnedWorktree(ctx context.Context, repo string, cfg ports.WorkspaceConfig) (ports.WorkspaceInfo, error) {
 	if !domain.SwarmValidHash(cfg.PinnedSourceCommit, true) || cfg.FreshBranch {
-		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned source must be a full commit ID without speculative branch selection")
+		return ports.WorkspaceInfo{}, errors.New("gitworktree: pinned source must be a full commit ID without speculative branch selection")
 	}
 	if err := w.validateBranch(ctx, repo, cfg.Branch); err != nil {
 		return ports.WorkspaceInfo{}, err
 	}
 	sha, err := w.revParse(ctx, repo, cfg.PinnedSourceCommit+"^{commit}")
-	if err != nil || sha != cfg.PinnedSourceCommit {
-		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned source commit is unavailable or mismatched: %v", err)
+	if err != nil {
+		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned source commit is unavailable: %w", err)
+	}
+	if sha != cfg.PinnedSourceCommit {
+		return ports.WorkspaceInfo{}, errors.New("gitworktree: pinned source commit is mismatched")
 	}
 	if exists, err := w.branchNameTaken(ctx, repo, cfg.Branch, true); err != nil {
 		return ports.WorkspaceInfo{}, err
@@ -32,15 +36,17 @@ func (w *Workspace) createPinnedWorktree(ctx context.Context, repo string, cfg p
 	if err != nil {
 		return ports.WorkspaceInfo{}, err
 	}
-	if _, err := os.Lstat(path); !os.IsNotExist(err) {
-		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned workspace path is present or inaccessible: %v", err)
+	if _, err := os.Lstat(path); err == nil {
+		return ports.WorkspaceInfo{}, errors.New("gitworktree: pinned workspace path is present")
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned workspace path is inaccessible: %w", err)
 	}
 	records, err := w.listRecords(ctx, repo)
 	if err != nil {
 		return ports.WorkspaceInfo{}, err
 	}
 	if _, exists := findWorktree(records, path); exists {
-		return ports.WorkspaceInfo{}, fmt.Errorf("gitworktree: pinned workspace path is already registered")
+		return ports.WorkspaceInfo{}, errors.New("gitworktree: pinned workspace path is already registered")
 	}
 	if err := w.enableWorktreeConfig(ctx, repo); err != nil {
 		return ports.WorkspaceInfo{}, err
@@ -51,8 +57,11 @@ func (w *Workspace) createPinnedWorktree(ctx context.Context, repo string, cfg p
 	}
 	info := ports.WorkspaceInfo{Path: path, Branch: cfg.Branch, BaseSHA: sha, BaseRef: sha, SessionID: cfg.SessionID, ProjectID: cfg.ProjectID, RepoPath: repo}
 	head, err := w.revParse(ctx, path, "HEAD")
-	if err != nil || head != sha {
-		return info, fmt.Errorf("gitworktree: pinned worktree HEAD was not verified: %v", err)
+	if err != nil {
+		return info, fmt.Errorf("gitworktree: pinned worktree HEAD was not verified: %w", err)
+	}
+	if head != sha {
+		return info, errors.New("gitworktree: pinned worktree HEAD is mismatched")
 	}
 	return info, nil
 }

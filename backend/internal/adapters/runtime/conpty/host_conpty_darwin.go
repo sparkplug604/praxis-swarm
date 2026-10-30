@@ -14,8 +14,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 	"github.com/creack/pty"
+
+	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 )
 
 // darwinPTYConn is a native macOS pseudoterminal owned by the detached host.

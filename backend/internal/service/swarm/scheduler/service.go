@@ -17,6 +17,7 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/workspace"
 )
 
+// Store supplies generation-fenced dispatch and completion transitions.
 type Store interface {
 	GetSwarmRun(context.Context, string) (domain.SwarmRun, error)
 	GetSwarmContract(context.Context, string, string, int64) (domain.SwarmTaskContract, error)
@@ -26,9 +27,13 @@ type Store interface {
 	ConfirmSwarmRunning(context.Context, domain.SwarmFence, string, string, time.Time) error
 	FinishSwarmAttempt(context.Context, domain.SwarmFence, string, string, bool, time.Time) error
 }
+
+// Admission reserves an eligible task under the routing and concurrency policy.
 type Admission interface {
 	Admit(context.Context, routing.AdmissionRequest) (domain.SwarmAttempt, routing.RouteAdvice, error)
 }
+
+// Composer freezes task packets and revalidates their identities before dispatch.
 type Composer interface {
 	Compose(context.Context, string, string) (planning.Packet, error)
 	ValidateResume(context.Context, planning.Packet) error
@@ -53,12 +58,16 @@ type Runtime interface {
 	Start(context.Context, Launch) (Observation, error)
 	Observe(context.Context, domain.SwarmAttempt) (Observation, error)
 }
+
+// Launch binds an admitted attempt to its packet, workspace and final preparation.
 type Launch struct {
 	Attempt     domain.SwarmAttempt
 	Packet      planning.Packet
 	Workspace   workspace.Snapshot
 	Preparation qualification.Preparation
 }
+
+// Observation records operation ownership and whether runtime absence is terminal.
 type Observation struct {
 	OperationID   string
 	SessionID     string
@@ -67,10 +76,14 @@ type Observation struct {
 	Exact         bool   // coordinator-observed operation/runtime-generation match
 	Terminal      bool   // absence is final: no owned process or pending/future launch
 }
+
+// Candidate pairs an admission request with its independently captured workspace.
 type Candidate struct {
 	Admission routing.AdmissionRequest
 	Workspace workspace.Snapshot
 }
+
+// Result retains admission advice and the outcome of one scheduling candidate.
 type Result struct {
 	RequestID string
 	Attempt   domain.SwarmAttempt
@@ -78,6 +91,7 @@ type Result struct {
 	Err       error
 }
 
+// Service schedules bounded fair batches and reconciles owned runtime observations.
 type Service struct {
 	// Owner is the coordinator lease identity, not caller-supplied authority.
 	Owner     string
@@ -309,7 +323,7 @@ func (s *Service) Dispatch(ctx context.Context, id string, snapshot workspace.Sn
 	if a.Schedule == nil || a.Schedule.SourceManifestHash != snapshot.ManifestHash || a.Schedule.WorkspaceIdentityHash != snapshot.IdentityHash || a.Schedule.WorkspaceRoot != snapshot.Destination.Path || a.BaseCommit != snapshot.Source.Head {
 		return domain.ErrSwarmStale
 	}
-	if err = workspace.ValidateForLaunch(ctx, snapshot); err != nil {
+	if err := workspace.ValidateForLaunch(ctx, snapshot); err != nil {
 		return err
 	}
 	p, err := s.Composer.Compose(ctx, a.RunID, a.ID)
@@ -317,17 +331,17 @@ func (s *Service) Dispatch(ctx context.Context, id string, snapshot workspace.Sn
 		return err
 	}
 	prepared, prepareErr := s.Preparer.Prepare(ctx, a, p, snapshot)
-	if err = s.checkPreparation(a, snapshot, prepared, prepareErr); err != nil {
+	if err := s.checkPreparation(a, snapshot, prepared, prepareErr); err != nil {
 		return err
 	}
-	if err = s.Composer.ValidateResume(ctx, p); err != nil {
+	if err := s.Composer.ValidateResume(ctx, p); err != nil {
 		return err
 	}
-	if err = workspace.ValidateForLaunch(ctx, snapshot); err != nil {
+	if err := workspace.ValidateForLaunch(ctx, snapshot); err != nil {
 		return err
 	}
 	// No authority comes from a cached packet or an earlier qualification.
-	if err = s.checkPreparation(a, snapshot, prepared, prepareErr); err != nil {
+	if err := s.checkPreparation(a, snapshot, prepared, prepareErr); err != nil {
 		return err
 	}
 	current, err := s.Store.GetSwarmAttempt(ctx, id)
@@ -337,7 +351,7 @@ func (s *Service) Dispatch(ctx context.Context, id string, snapshot workspace.Sn
 	if domain.SwarmHash(a) != domain.SwarmHash(current) {
 		return domain.ErrSwarmStale
 	}
-	if err = ctx.Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return err
 	}
 	a, launch, err := s.Store.BeginSwarmDispatch(ctx, fence(a), s.now())
@@ -377,6 +391,7 @@ func (s *Service) checkPreparation(a domain.SwarmAttempt, snapshot workspace.Sna
 	return nil
 }
 
+// Reconcile updates an attempt only after observing its exact durable runtime identity.
 func (s *Service) Reconcile(ctx context.Context, id string) error {
 	if ctx == nil || !domain.SwarmValidID(s.Owner) || s.Store == nil || s.Runtime == nil {
 		return domain.ErrSwarmInvalid

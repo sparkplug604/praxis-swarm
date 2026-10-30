@@ -13,6 +13,7 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 )
 
+// ErrSwarmExactLiveUnsupported rejects live launches until concrete confinement is qualified.
 var ErrSwarmExactLiveUnsupported = errors.New("exact swarm launch requires qualified concrete runtime confinement; live execution is unavailable")
 var swarmRuntimeSessionID = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
@@ -85,10 +86,10 @@ func (l *SwarmExactLauncher) Start(ctx context.Context, receipt domain.SwarmExec
 	if !errors.Is(err, domain.ErrSwarmNotFound) {
 		return result, err
 	}
-	if err = l.Validate(ctx, receipt, cloneSwarmRuntimeConfig(cfg)); err != nil {
+	if err := l.Validate(ctx, receipt, cloneSwarmRuntimeConfig(cfg)); err != nil {
 		return result, err
 	}
-	if err = ctx.Err(); err != nil {
+	if err := ctx.Err(); err != nil {
 		return result, err
 	}
 	won, err := l.Store.AuthorizeSwarmExecution(ctx, domain.SwarmFence{AttemptID: receipt.AttemptID, Owner: receipt.Owner, Generation: receipt.Generation}, receipt, l.now())
@@ -140,17 +141,22 @@ func recordSwarmRuntimeError(result *domain.SwarmExecutionResult, err error) {
 		if current == nil {
 			return
 		}
-		if typed, ok := current.(ports.RuntimeEffectError); ok {
+		var typed ports.RuntimeEffectError
+		if errors.As(current, &typed) {
 			handles = append(handles, typed.PossibleHandle().ID)
 		}
-		switch wrapped := current.(type) {
-		case interface{ Unwrap() []error }:
+		// Visit single wrappers before looking for joins so effect-bearing
+		// intermediate wrappers cannot lose their own possible handles.
+		if child := errors.Unwrap(current); child != nil {
+			visit(child)
+			return
+		}
+		var wrapped interface{ Unwrap() []error }
+		if errors.As(current, &wrapped) {
 			joined = true
 			for _, child := range wrapped.Unwrap() {
 				visit(child)
 			}
-		case interface{ Unwrap() error }:
-			visit(wrapped.Unwrap())
 		}
 	}
 	visit(err)

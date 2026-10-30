@@ -11,7 +11,7 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 )
 
-// The bounded effort and quota-selection concepts adapt OpenSwarm
+// Task supplies bounded effort and quota-selection inputs adapted from OpenSwarm
 // b2a70d436ad72f0c5b036730fc86b749ddc68af7 (Apache-2.0). This is a new Go
 // implementation: unknown inputs are rejected, overrides remain bounded, and
 // unused quota never increases effort or selects a premium model.
@@ -23,6 +23,7 @@ type Task struct {
 	EffortShift   int
 }
 
+// RouteAdvice records a bounded selection and the policy/catalog identities supporting it.
 type RouteAdvice struct {
 	Requested    domain.SwarmSelection
 	Resolved     domain.SwarmSelection
@@ -236,6 +237,7 @@ func ClampEffort(order, supported []string, current string) (string, error) {
 	}
 	seen := make(map[string]bool, len(supported))
 	best, distance := -1, len(order)
+	var selected string
 	for _, effort := range supported {
 		i, found := positions[effort]
 		if !found || seen[effort] {
@@ -247,10 +249,13 @@ func ClampEffort(order, supported []string, current string) (string, error) {
 			d = -d
 		}
 		if d < distance || (d == distance && i < best) {
-			best, distance = i, d
+			best, distance, selected = i, d, effort
 		}
 	}
-	return order[best], nil
+	if best < 0 {
+		return "", fmt.Errorf("%w: no supported effort in order", domain.ErrSwarmInvalid)
+	}
+	return selected, nil
 }
 
 func effortPositions(order []string) (map[string]int, error) {

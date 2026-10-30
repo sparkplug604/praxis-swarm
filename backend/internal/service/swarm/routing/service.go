@@ -10,6 +10,7 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/qualification"
 )
 
+// Store provides durable request recovery and atomic policy-bound task admission.
 type Store interface {
 	GetSwarmAttemptByRequest(context.Context, string) (domain.SwarmAttempt, error)
 	GetSwarmRun(context.Context, string) (domain.SwarmRun, error)
@@ -17,11 +18,15 @@ type Store interface {
 	GetSwarmRoutingAccount(context.Context, string) (domain.SwarmRoutingAccount, error)
 	ClaimSwarmTask(context.Context, domain.SwarmClaim, string, string, time.Time, time.Time) (domain.SwarmAttempt, error)
 }
+
+// Service combines current catalog advice with durable account admission.
 type Service struct {
 	Store   Store
 	Catalog qualification.Catalog
 	Now     func() time.Time
 }
+
+// AdmissionRequest identifies a claim, context demand and requested lease interval.
 type AdmissionRequest struct {
 	Claim                         domain.SwarmClaim
 	AttemptID, OperationID, Scope string

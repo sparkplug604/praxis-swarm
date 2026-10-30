@@ -11,35 +11,47 @@ import (
 )
 
 var (
+	// ErrInvalid reports malformed planning data.
 	ErrInvalid = errors.New("invalid swarm planning input")
-	ErrStale   = errors.New("stale swarm packet or tool identity")
+	// ErrStale reports changed packet or executable identity.
+	ErrStale = errors.New("stale swarm packet or tool identity")
+	// ErrContext reports unavailable or unapproved required context.
 	ErrContext = errors.New("required swarm context unavailable or unapproved")
-	ErrBudget  = errors.New("mandatory swarm packet exceeds context budget")
+	// ErrBudget reports mandatory context exceeding the packet bound.
+	ErrBudget = errors.New("mandatory swarm packet exceeds context budget")
 )
 
+// PacketVersion identifies the serialized worker-packet protocol.
 const PacketVersion int64 = 1
+
+// MaxPlannerBytes bounds the supplied planner JSON document.
 const MaxPlannerBytes = 2 * 1024 * 1024
+
+// MaxPacketBytes bounds the complete serialized worker packet.
 const MaxPacketBytes = 1024 * 1024
 
+// Subject supplies task identity and path scope to the context approval authority.
 type Subject struct {
 	ProjectID                                   domain.ProjectID
 	RunID, TaskID, AttemptID, TaskType, Backend string
 	Paths                                       []string
 }
 
-// Resolve must check current source eligibility/revocation and task scope. A
+// ContextResolver must check current source eligibility/revocation and task scope. A
 // planner-supplied "approved" flag is never accepted. No live Praxis connector
 // ships here; implementations must obtain approval from their existing authority.
 type ContextResolver interface {
 	Resolve(context.Context, Subject, domain.SwarmContextRef) (ApprovedContext, error)
 }
 
+// ApprovedContext binds eligible content to the authority decision that approved it.
 type ApprovedContext struct {
 	ID, SHA256, DecisionID string
 	DecisionVersion        int64
 	Body                   string
 }
 
+// IncludedContext retains selected content and its approval provenance in a packet.
 type IncludedContext struct {
 	ID              string `json:"id"`
 	Kind            string `json:"kind"`
@@ -49,6 +61,7 @@ type IncludedContext struct {
 	Body            string `json:"body"`
 }
 
+// OmittedContext records why a context reference was excluded without truncating it.
 type OmittedContext struct {
 	ID     string `json:"id"`
 	Reason string `json:"reason"` // not_applicable, unavailable, unapproved, hash_mismatch, budget
@@ -58,12 +71,14 @@ type OmittedContext struct {
 // selected bodies and omission receipts. Required bodies are never truncated.
 type Measure func([]IncludedContext, []OmittedContext) (int, error)
 
+// ContextSelection contains the selected bodies, omission receipts and measured size.
 type ContextSelection struct {
 	Included []IncludedContext
 	Omitted  []OmittedContext
 	Bytes    int
 }
 
+// Store supplies durable plans and immutable task/attempt contracts for composition.
 type Store interface {
 	CreateSwarmRun(context.Context, string, string, domain.SwarmPlan, time.Time) (domain.SwarmRun, error)
 	GetSwarmRun(context.Context, string) (domain.SwarmRun, error)
@@ -71,10 +86,12 @@ type Store interface {
 	GetSwarmContract(context.Context, string, string, int64) (domain.SwarmTaskContract, error)
 }
 
+// ToolVerifier revalidates recorded executable identities without selecting substitutes.
 type ToolVerifier interface {
 	Verify(context.Context, []domain.SwarmToolIdentity) error
 }
 
+// Service composes worker packets from durable contracts and trusted context/tool checks.
 type Service struct {
 	Store   Store
 	Context ContextResolver
@@ -82,7 +99,7 @@ type Service struct {
 	Now     func() time.Time
 }
 
-// A packet is a frozen envelope. Entry and Markdown are regenerated and compared
+// Packet is a frozen envelope. Entry and Markdown are regenerated and compared
 // on resume; their prose is not a second source of scheduling instructions.
 type Packet struct {
 	Version               int64                    `json:"version"`

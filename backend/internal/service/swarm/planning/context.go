@@ -194,7 +194,7 @@ func contextApprovalReason(ref domain.SwarmContextRef, approved ApprovedContext,
 		}
 		return "unavailable"
 	}
-	if approved.ID != ref.ID || !domain.SwarmValidID(approved.DecisionID) || !utf8.ValidString(approved.DecisionID) || approved.DecisionVersion <= 0 || len(approved.Body) == 0 || len(approved.Body) > MaxPacketBytes || !utf8.ValidString(approved.Body) {
+	if approved.ID != ref.ID || !domain.SwarmValidID(approved.DecisionID) || !utf8.ValidString(approved.DecisionID) || approved.DecisionVersion <= 0 || approved.Body == "" || len(approved.Body) > MaxPacketBytes || !utf8.ValidString(approved.Body) {
 		return "unapproved"
 	}
 	if approved.SHA256 != ref.SHA256 {

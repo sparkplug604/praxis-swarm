@@ -32,13 +32,19 @@ type StartSupervisedSwarmRequest struct {
 	Context        []SupervisedSwarmContextInput `json:"context"`
 	TimeoutSeconds int                           `json:"timeoutSeconds" minimum:"10" maximum:"600"`
 }
+
+// SupervisedSwarmContextInput supplies a context body whose ID and hash must match a plan reference.
 type SupervisedSwarmContextInput struct {
 	ID   string `json:"id"`
 	Body string `json:"body"`
 }
+
+// SupervisedSwarmRunIDParam identifies one durable supervised run in a route.
 type SupervisedSwarmRunIDParam struct {
 	RunID string `path:"runId"`
 }
+
+// SupervisedSwarmRunResponse exposes run state, preserved source evidence and declared limitations.
 type SupervisedSwarmRunResponse struct {
 	ID              string                        `json:"id"`
 	Profile         string                        `json:"profile"`
@@ -55,6 +61,8 @@ type SupervisedSwarmRunResponse struct {
 	Errors          []string                      `json:"errors"`
 	Limits          []string                      `json:"limits"`
 }
+
+// SupervisedSwarmTaskResponse exposes a task packet, AO session observation and frozen candidate references.
 type SupervisedSwarmTaskResponse struct {
 	ID            string                             `json:"id"`
 	RequestID     string                             `json:"requestId"`
@@ -70,6 +78,8 @@ type SupervisedSwarmTaskResponse struct {
 	DiffPath      string                             `json:"diffPath,omitempty"`
 	Error         string                             `json:"error,omitempty"`
 }
+
+// SupervisedSwarmObservationResponse reports controller observations with explicit model and prompt evidence provenance.
 type SupervisedSwarmObservationResponse struct {
 	Controller        string          `json:"controller"`
 	TurnState         string          `json:"turnState"`
