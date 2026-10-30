@@ -1,7 +1,8 @@
 openapi: 3.1.0
 info:
-  description: Loopback-only HTTP surface served by the Go daemon. Generated from
-    Go (code-first) — do not edit by hand; run `go generate ./...`.
+  description: 'Loopback-only HTTP surface served by the Go daemon. Generated from
+    Go (code-first) — do not edit by hand; run `go generate ./...`. Modified for Praxis
+    Swarm: supplied-plan supervised execution routes and contracts.'
   title: Agent Orchestrator HTTP daemon
   version: 0.1.0-route-shell
 servers:
@@ -12755,6 +12756,171 @@ paths:
       summary: ""
       tags:
       - conversations
+  /api/v1/swarm/runs:
+    post:
+      operationId: startSupervisedSwarmRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSupervisedSwarmRequest'
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupervisedSwarmRunResponse'
+          description: Accepted
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Start or replay a supervised AO swarm run
+      tags:
+      - swarm
+  /api/v1/swarm/runs/{runId}:
+    get:
+      operationId: getSupervisedSwarmRun
+      parameters:
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupervisedSwarmRunResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Get a supervised swarm report
+      tags:
+      - swarm
+  /api/v1/swarm/runs/{runId}/stop:
+    post:
+      operationId: stopSupervisedSwarmRun
+      parameters:
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupervisedSwarmRunResponse'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Request supervised swarm stop and return observations
+      tags:
+      - swarm
   /api/v1/system/github-auth:
     get:
       operationId: getGitHubAuthRequirement
@@ -21407,6 +21573,25 @@ components:
       - sessionId
       - transition
       type: object
+    StartSupervisedSwarmRequest:
+      properties:
+        context:
+          items:
+            $ref: '#/components/schemas/SupervisedSwarmContextInput'
+          type: array
+        plan: {}
+        requestId:
+          type: string
+        timeoutSeconds:
+          maximum: 600
+          minimum: 10
+          type: integer
+      required:
+      - requestId
+      - plan
+      - context
+      - timeoutSeconds
+      type: object
     SteerConversationRequest:
       properties:
         attachments:
@@ -21498,6 +21683,143 @@ components:
       required:
       - runId
       - verdict
+      type: object
+    SupervisedSwarmContextInput:
+      properties:
+        body:
+          type: string
+        id:
+          type: string
+      required:
+      - id
+      - body
+      type: object
+    SupervisedSwarmObservationResponse:
+      properties:
+        completedAt:
+          format: date-time
+          type:
+          - "null"
+          - string
+        controller:
+          type: string
+        effort:
+          type: string
+        model:
+          type: string
+        modelEvidence:
+          type: string
+        observedAt:
+          format: date-time
+          type: string
+        promptBytes:
+          type: integer
+        promptEvidence:
+          type: string
+        providerTurnId:
+          type: string
+        startedAt:
+          format: date-time
+          type:
+          - "null"
+          - string
+        systemPromptBytes:
+          type: integer
+        turnState:
+          type: string
+        usage: {}
+      required:
+      - controller
+      - turnState
+      - observedAt
+      type: object
+    SupervisedSwarmRunResponse:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        deadlineAt:
+          format: date-time
+          type: string
+        errors:
+          items:
+            type: string
+          type: array
+        id:
+          type: string
+        limits:
+          items:
+            type: string
+          type: array
+        plan: {}
+        profile:
+          type: string
+        requestHash:
+          type: string
+        requestId:
+          type: string
+        sourcePath:
+          type: string
+        sourceSnapshot:
+          type: string
+        sourceUnchanged:
+          type: boolean
+        status:
+          type: string
+        tasks:
+          items:
+            $ref: '#/components/schemas/SupervisedSwarmTaskResponse'
+          type: array
+      required:
+      - id
+      - profile
+      - requestId
+      - requestHash
+      - plan
+      - status
+      - createdAt
+      - deadlineAt
+      - sourcePath
+      - sourceSnapshot
+      - sourceUnchanged
+      - tasks
+      - errors
+      - limits
+      type: object
+    SupervisedSwarmTaskResponse:
+      properties:
+        branch:
+          type: string
+        candidateHash:
+          type: string
+        diffPath:
+          type: string
+        error:
+          type: string
+        id:
+          type: string
+        observation:
+          $ref: '#/components/schemas/SupervisedSwarmObservationResponse'
+        packet: {}
+        requestId:
+          type: string
+        sessionId:
+          type: string
+        snapshotHash:
+          type: string
+        snapshotPath:
+          type: string
+        status:
+          type: string
+        workspacePath:
+          type: string
+      required:
+      - id
+      - requestId
+      - branch
+      - packet
+      - status
+      - observation
       type: object
     SwitchSessionAgentAccountRequest:
       properties:
@@ -22769,6 +23091,8 @@ components:
       - rangeMode
       type: object
 tags:
+- description: Supervised AO runs with supplied plans and durable reports
+  name: swarm
 - description: Supported and locally runnable agent adapters
   name: agents
 - description: Project registry, configuration, and lifecycle administration

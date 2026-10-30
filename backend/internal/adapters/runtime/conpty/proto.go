@@ -2,6 +2,8 @@
 // macOS agent sessions. This file contains its OS-agnostic framing protocol.
 //
 // Frame layout: [1-byte type][4-byte big-endian length][payload]
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -13,6 +15,7 @@ import (
 const (
 	conPTYHostProtocolVersion         = 2
 	conPTYStyledOutputProtocolVersion = 2
+	FencedStopProtocolVersion         = 1
 )
 
 // Message type constants. Values must match pty-host.ts MSG_* constants exactly.
@@ -27,7 +30,27 @@ const (
 	MsgKillReq            byte = 0x08 // client -> host: empty
 	MsgGetStyledOutputReq byte = 0x09 // client -> host: JSON {lines}
 	MsgGetStyledOutputRes byte = 0x0a // host -> client: rendered UTF-8 text with ANSI styles
+	MsgFencedStopReq      byte = 0x0b // client -> host: FencedStopRequest
+	MsgFencedStopRes      byte = 0x0c // host -> client: FencedStopResponse
 )
+
+// FencedStopRequest identifies the one immutable launch allowed to be stopped.
+type FencedStopRequest struct {
+	Version    int    `json:"version"`
+	SessionID  string `json:"sessionId"`
+	Generation string `json:"generation"`
+}
+
+// FencedStopResponse acknowledges the identity check and reports only PTY
+// cleanup. Even succeeded does not establish terminal or descendant absence.
+type FencedStopResponse struct {
+	Version    int    `json:"version"`
+	SessionID  string `json:"sessionId"`
+	Generation string `json:"generation"`
+	Accepted   bool   `json:"accepted"`
+	Cleanup    string `json:"cleanup"`
+	Error      string `json:"error,omitempty"`
+}
 
 // JSON payload structs shared with later tasks (kept minimal).
 

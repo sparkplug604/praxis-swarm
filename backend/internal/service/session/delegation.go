@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package session
 
 import (
@@ -38,6 +40,9 @@ type DelegateTaskInput struct {
 	TaskPreparation   domain.TaskPreparationToken
 	ClientRequestID   string
 	ClientRequestHash string
+	// DisableCosmeticModelCalls keeps deterministic task titles and prevents
+	// unbudgeted naming calls for this request, including Git workspace naming.
+	DisableCosmeticModelCalls bool
 }
 
 // DelegateTaskOutcome identifies the spawned worker. OrchestratorID remains
@@ -89,14 +94,15 @@ func (s *Service) DelegateTask(ctx context.Context, in DelegateTaskInput) (Deleg
 
 	effort, effortOverride := optionalTuningValue(in.Effort)
 	worker, _, _, err := s.spawnWithTelemetry(ctx, ports.SpawnConfig{
-		ClientRequestID:   in.ClientRequestID,
-		ClientRequestHash: in.ClientRequestHash,
-		ProjectID:         in.ProjectID,
-		Kind:              domain.KindWorker,
-		Harness:           in.RequestedAgent,
-		Prompt:            prompt,
-		DisplayName:       delegatedTaskDisplayName(in.Brief),
-		NameFromPrompt:    prompt != "" && project.Kind.WithDefault() != domain.ProjectKindScratch,
+		ClientRequestID:           in.ClientRequestID,
+		ClientRequestHash:         in.ClientRequestHash,
+		ProjectID:                 in.ProjectID,
+		Kind:                      domain.KindWorker,
+		Harness:                   in.RequestedAgent,
+		Prompt:                    prompt,
+		DisplayName:               delegatedTaskDisplayName(in.Brief),
+		NameFromPrompt:            !in.DisableCosmeticModelCalls && prompt != "" && project.Kind.WithDefault() != domain.ProjectKindScratch,
+		DisableCosmeticModelCalls: in.DisableCosmeticModelCalls,
 		AgentConfig: ports.AgentConfig{
 			Model:       strings.TrimSpace(in.Model),
 			Effort:      effort,
@@ -118,7 +124,7 @@ func (s *Service) DelegateTask(ctx context.Context, in DelegateTaskInput) (Deleg
 	// The worker spawn is the commit point. Background title
 	// generation must never hold the new-task response open. A promptless worker
 	// stays idle with its provisional title until the user supplies instructions.
-	if prompt != "" && project.Kind.WithDefault() == domain.ProjectKindScratch && !worker.ClientRequestCommitted {
+	if !in.DisableCosmeticModelCalls && prompt != "" && project.Kind.WithDefault() == domain.ProjectKindScratch && !worker.ClientRequestCommitted {
 		s.refineDelegatedTaskTitleInBackground(worker.ID, in)
 	}
 	return DelegateTaskOutcome{WorkerID: worker.ID}, nil

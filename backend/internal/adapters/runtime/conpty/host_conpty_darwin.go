@@ -1,5 +1,7 @@
 //go:build darwin
 
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -12,18 +14,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aoagents/agent-orchestrator/backend/internal/ports"
 	"github.com/creack/pty"
 )
 
 // darwinPTYConn is a native macOS pseudoterminal owned by the detached host.
 // The child starts in its own session/process group (creack/pty's StartWithSize
-// does this), so teardown can reap the whole launched process tree rather than
-// leaving dev servers or other descendants behind.
+// does this). Teardown targets that group while its leader is still observed
+// running. After the leader exits, a retained numeric group id does not prove
+// ownership and Close refuses to signal it. This does not contain detached
+// descendants or establish PID/group-id-reuse-proof control.
 type darwinPTYConn struct {
 	pty *os.File
 	cmd *exec.Cmd
 
 	closeOnce sync.Once
+	closeErr  error
 	doneC     chan struct{}
 	exitMu    sync.Mutex
 	exitCode  int
@@ -79,32 +85,41 @@ func (c *darwinPTYConn) Resize(cols, rows int) error {
 }
 
 func (c *darwinPTYConn) Close() error {
-	var closeErr error
 	c.closeOnce.Do(func() {
 		if c.cmd.Process != nil {
-			select {
-			case <-c.doneC:
-			default:
-				// The PTY child is a session leader. Signal its process group so
-				// descendants cannot outlive a terminal AO explicitly destroys.
-				// SIGHUP first, as a closing terminal would: an interactive shell
-				// ignores SIGTERM, so without it every close waited out the full
-				// grace before SIGKILL.
-				pgid := c.cmd.Process.Pid
-				_ = syscall.Kill(-pgid, syscall.SIGHUP)
-				_ = syscall.Kill(-pgid, syscall.SIGTERM)
-				if !waitForDarwinProcessGroupExit(pgid, darwinPTYCloseGrace) {
-					_ = syscall.Kill(-pgid, syscall.SIGKILL)
-					select {
-					case <-c.doneC:
-					case <-time.After(darwinPTYCloseGrace):
+			pgid := c.cmd.Process.Pid
+			if _, exited := c.ExitCode(); exited {
+				// Scrollback can retain this PTY long after its leader is reaped.
+				// The numeric group may now belong to unrelated processes. Only
+				// absence is conclusive here; never signal a surviving group.
+				if err := syscall.Kill(-pgid, 0); !errors.Is(err, syscall.ESRCH) {
+					c.closeErr = fmt.Errorf("darwin pty: leader exited; ownership of process group %d cannot be proven: %w", pgid, errors.Join(ports.ErrRuntimeProbeInconclusive, err))
+				}
+			} else {
+				var signalErr error
+				signalGroup := func(signal syscall.Signal) {
+					if err := syscall.Kill(-pgid, signal); err != nil && !errors.Is(err, syscall.ESRCH) {
+						signalErr = errors.Join(signalErr, fmt.Errorf("darwin pty: signal process group %d with %s: %w", pgid, signal, err))
 					}
 				}
+				// SIGHUP preserves prompt terminal close for interactive shells
+				// that ignore SIGTERM. Stubborn original-group members get SIGKILL.
+				signalGroup(syscall.SIGHUP)
+				signalGroup(syscall.SIGTERM)
+				if !waitForDarwinProcessGroupExit(pgid, darwinPTYCloseGrace) {
+					signalGroup(syscall.SIGKILL)
+					if !waitForDarwinProcessGroupExit(pgid, darwinPTYCloseGrace) {
+						c.closeErr = errors.Join(signalErr, fmt.Errorf("darwin pty: process group %d remains present after SIGKILL: %w", pgid, ports.ErrRuntimeProbeInconclusive))
+					}
+				}
+				// Darwin can return EPERM while an exiting group contains only
+				// zombies. Final ESRCH evidence settles such an intermediate signal
+				// failure; otherwise preserve it with the inconclusive teardown.
 			}
 		}
-		closeErr = c.pty.Close()
+		c.closeErr = errors.Join(c.closeErr, c.pty.Close())
 	})
-	return closeErr
+	return c.closeErr
 }
 
 func waitForDarwinProcessGroupExit(pgid int, timeout time.Duration) bool {
@@ -126,7 +141,9 @@ func waitForDarwinProcessGroupExit(pgid int, timeout time.Duration) bool {
 
 func darwinProcessGroupAlive(pgid int) bool {
 	err := syscall.Kill(-pgid, 0)
-	return err == nil || errors.Is(err, syscall.EPERM)
+	// Only ESRCH proves absence. Permission or other probe failures must not
+	// turn an uncertain teardown into success.
+	return !errors.Is(err, syscall.ESRCH)
 }
 
 func (c *darwinPTYConn) Done() <-chan struct{} { return c.doneC }

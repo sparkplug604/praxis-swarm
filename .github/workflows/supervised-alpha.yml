@@ -1,0 +1,113 @@
+name: Supervised alpha
+
+# Added by Praxis Swarm: narrow source/profile validation, not the inherited
+# full-product gate, live model qualification, or a publishing workflow.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervised-alpha-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  macos-source-and-profile:
+    name: macOS source and supervised profile (offline fixtures)
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      GOMAXPROCS: "2"
+      GOFLAGS: "-p=1"
+      GOTOOLCHAIN: local
+      PYTHONDONTWRITEBYTECODE: "1"
+      GIT_TERMINAL_PROMPT: "0"
+      AO_DATA_DIR: ${{ runner.temp }}/praxis-alpha/ao-data
+      AO_RUN_FILE: ${{ runner.temp }}/praxis-alpha/daemon.json
+      AO_HARNESS_UPDATE_CHECKS: "off"
+      AO_TELEMETRY_EVENTS: "off"
+      AO_TELEMETRY_METRICS: "off"
+      AO_TELEMETRY_REMOTE: "off"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Record source and prerequisites
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/praxis-alpha/logs"
+          {
+            git rev-parse HEAD
+            go version
+            git --version
+            python3 --version
+            python3 -c 'import sys; assert sys.version_info >= (3, 8), "Python 3.8+ is required"'
+            uname -sm
+          } 2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/environment.log"
+
+      - name: Check the public boundary
+        run: |
+          set -euo pipefail
+          bash scripts/check-public-boundary.sh 2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/public-boundary.log"
+
+      - name: Build the CLI and daemon from source
+        run: |
+          set -euo pipefail
+          go -C backend build -o "$RUNNER_TEMP/praxis-alpha/ao" ./cmd/ao 2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/build.log"
+          go version -m "$RUNNER_TEMP/praxis-alpha/ao" > "$RUNNER_TEMP/praxis-alpha/logs/build-info.log"
+
+      - name: Test the offline report and supervised fixture generator
+        run: |
+          set -euo pipefail
+          python3 -B -m unittest discover -s scripts/swarm -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/python-tests.log"
+
+      - name: Run the offline coordination demo
+        run: |
+          set -euo pipefail
+          bash scripts/swarm/demo-offline.sh --output-dir "$RUNNER_TEMP/praxis-alpha/offline-demo" 2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/offline-demo.log"
+
+      - name: Test supplied plans and supervised lifecycle with race detection
+        run: |
+          set -euo pipefail
+          go -C backend test -race -count=1 -p 1 -timeout=15m -v \
+            ./internal/service/swarm/planning \
+            ./internal/service/swarm/supervised \
+            ./internal/service/swarm/workspace \
+            2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/profile-tests.log"
+
+      - name: Test swarm transport, storage and source binding with race detection
+        run: |
+          set -euo pipefail
+          go -C backend test -race -count=1 -p 1 -timeout=15m -v \
+            -run '^(Test(Swarm|Supervised|Pinned)|TestMigrationVersionLedger$)' \
+            ./internal/domain ./internal/cli ./internal/daemon \
+            ./internal/httpd/controllers ./internal/session_manager \
+            ./internal/storage/sqlite ./internal/storage/sqlite/store \
+            ./internal/adapters/workspace/gitworktree \
+            2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/boundary-tests.log"
+
+      # Keep failure evidence. No binaries, credentials, provider sessions,
+      # signed desktop artifacts or releases are uploaded by this workflow.
+      - name: Retain alpha validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: supervised-alpha-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/praxis-alpha/logs/
+            ${{ runner.temp }}/praxis-alpha/offline-demo/
+          retention-days: 7
+          if-no-files-found: warn

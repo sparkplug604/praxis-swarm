@@ -1,19 +1,49 @@
+# Modified for Praxis Swarm: fork-specific evidence fields; no inherited community promises.
 name: Bug report
-description: Something is broken or behaving unexpectedly.
+description: Report unexpected behavior in Praxis Swarm.
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: textarea
     id: summary
     attributes:
-      label: What went wrong?
-      description: Tell us what you did and what went wrong. Add a screenshot if you can.
+      label: What happened?
+      description: Describe what you did and what went wrong. A diagnosis is not required.
     validations:
       required: true
-
+  - type: dropdown
+    id: workflow
+    attributes:
+      label: Which workflow?
+      options:
+        - Offline demo or tests
+        - Supervised swarm CLI with real model sessions
+        - Other inherited AO behavior
+        - Unsure
+    validations:
+      required: false
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and expected result
+      description: Include the command or steps, what you expected, and how often it happens. Partial reproduction details are welcome.
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Checkout and environment
+      description: Commit or version, OS/architecture, relevant tool versions, and model/effort if a live run was involved. Do not include account credentials.
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant evidence
+      description: Optional report excerpt, error or screenshot. Mark passed, failed, skipped and not-run checks accurately. Remove secrets, personal paths and unrelated task content.
+    validations:
+      required: false
   - type: markdown
     attributes:
       value: |
-        Optional: Ask your coding agent to use the [bug-triage skill](https://github.com/OrchestratorInc/agent-orchestrator/blob/main/.agents/skills/bug-triage/SKILL.md) to help investigate the problem.
-
-        Need help? Ask us on [Discord](https://discord.com/invite/UZv7JjxbwG).
+        Keep observations separate from suggested causes. For setup and scope, see the [Praxis Swarm guide](https://github.com/sparkplug604/praxis-swarm/blob/main/README.md).

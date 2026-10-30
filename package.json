@@ -1,6 +1,7 @@
 {
 	"name": "agent-orchestrator",
 	"private": true,
+	"_praxisSwarmModificationNotice": "Modified for Praxis Swarm: preserve notices when regenerating extended contracts.",
 	"scripts": {
 		"lint": "cd backend && go test ./... && go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2 run --path-mode=abs",
 		"frontend:typecheck": "npm --prefix frontend run typecheck",
@@ -8,9 +9,9 @@
 		"product-ui:check": "npm --prefix packages/product-ui run typecheck && npm --prefix packages/product-ui test && npm --prefix packages/product-ui run build",
 		"shared:check": "npm run cloud:check && npm run product-ui:check",
 		"migration:create": "node scripts/create-migration.mjs",
-		"sqlc": "cd backend && go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate",
+		"sqlc": "(cd backend && go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1 generate) && node scripts/swarm/mark-generated.mjs sqlc",
 		"api:spec": "cd backend && go generate ./internal/httpd/apispec/...",
-		"api:ts": "openapi-typescript backend/internal/httpd/apispec/openapi.yaml -o frontend/src/api/schema.ts",
+		"api:ts": "openapi-typescript backend/internal/httpd/apispec/openapi.yaml -o frontend/src/api/schema.ts && node scripts/swarm/mark-generated.mjs api",
 		"api": "npm run api:spec && npm run api:ts"
 	},
 	"devDependencies": {

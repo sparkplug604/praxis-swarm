@@ -1,40 +1,36 @@
+<!-- Modified for Praxis Swarm from the inherited Agent Orchestrator template. Replace counts with verified values. -->
 Code changes: +<added> -<deleted>\
 Tests: +<added> -<deleted>\
 Others: +<added> -<deleted>
 
-## What
+## Problem and result
 
-Brief description of the change.
+What concrete problem does this solve, and what happens after the change?
+Link the related issue when applicable.
 
-## Why
+## Before and after
 
-Problem this solves / issue it closes (e.g. `Fixes #123`).
+Show a concise behavior, output or API comparison. For UI changes, include the
+changed states in screenshots or a recording. If behavior is unchanged, say so.
 
-## Before / After
+## Implementation and limits
 
-| Before | After |
-| --- | --- |
-| Screenshot, recording, or behavior before the change | The same view or behavior after the change |
+Explain decisions a reviewer needs to assess, intentional omissions and any
+remaining uncertainty. Identify live-provider effects or changed permissions,
+spending, workspace ownership, stop or recovery behavior when relevant.
 
-- UI changes: add a screenshot of each changed state, or a short recording for flows and animations.
-  Put MP4/MOV recordings on their own line below the table so GitHub shows the player.
-- Other changes: compare output, API responses, errors, or numbers.
-- Nothing visible: write `No user-visible change` and why.
+## Validation
 
-## How
-
-Key implementation decisions, trade-offs, or areas reviewers should focus on.
-Call out intentional omissions (especially vs older TypeScript behavior) when relevant.
-
-## Testing
-
-How you validated this locally (commands, scenarios).
+List the exact commands or scenarios and their results. Distinguish passed,
+failed, skipped and not-run checks. Label fakes/helper processes separately from
+real model execution. Include known baseline failures rather than hiding them.
 
 ## Checklist
 
-- [ ] Branched from `main` (or continuing an existing PR branch)
-- [ ] One focused change; links the related issue when applicable
-- [ ] Follows [AGENTS.md](https://github.com/OrchestratorInc/agent-orchestrator/blob/main/AGENTS.md) conventions and PR hygiene
-- [ ] Before / After filled in; UI changes include screenshots or a recording
-- [ ] Tests added/updated for user-visible behavior where it makes sense
-- [ ] Relevant CI checks pass for the area touched (`go`, frontend, etc.)
+- [ ] One focused change; related docs updated where user behavior changes
+- [ ] Follows this fork's [contributor guide](https://github.com/sparkplug604/praxis-swarm/blob/main/CONTRIBUTING.md) and [AGENTS.md](https://github.com/sparkplug604/praxis-swarm/blob/main/AGENTS.md)
+- [ ] Relevant checks completed, with remaining gaps stated above
+- [ ] Generated artifacts regenerated from their source when applicable
+- [ ] Shared evidence excludes credentials, personal paths and unrelated task content
+- [ ] Live model/provider calls, if any, were explicitly authorized and are labelled
+- [ ] Upstream attribution and applicable modification notices are preserved

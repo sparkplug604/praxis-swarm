@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package ports
 
 import (
@@ -40,7 +42,13 @@ type SpawnConfig struct {
 	Kind         domain.SessionKind
 	Harness      domain.AgentHarness
 	Branch       string
-	Prompt       string
+	// PinnedSourceCommit creates a new worker branch from this full commit ID.
+	// It forbids branch reuse, default-branch refresh and speculative worktrees.
+	PinnedSourceCommit string
+	// SupervisedAssignment is internal to the supervised coordinator. Its compact
+	// prompt ends with a native conversation result instead of AO workflow calls.
+	SupervisedAssignment bool
+	Prompt               string
 	// AgentConfig overrides the resolved project/role agent config for this
 	// single spawn. Empty fields keep the project defaults.
 	AgentConfig AgentConfig
@@ -72,6 +80,9 @@ type SpawnConfig struct {
 	NameFromPrompt bool
 	// KeepDisplayName preserves an explicit CLI/API title while naming its workspace.
 	KeepDisplayName bool
+	// DisableCosmeticModelCalls prevents unbudgeted task/workspace naming calls
+	// for this spawn, even when NameFromPrompt is requested.
+	DisableCosmeticModelCalls bool
 	// Attachments are files pasted or dropped into the task brief. They are
 	// written into the session worktree and referenced by path in the prompt so
 	// the agent can read them (CLI agents receive the prompt as text and cannot

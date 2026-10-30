@@ -1,3 +1,4 @@
+# Modified for Praxis Swarm: local-state exclusions and public-source verification.
 # Node / Electron
 node_modules/
 .pnpm/
@@ -108,3 +109,5 @@ pnpm-lock.yaml
 .serena/
 
 /frontend/wake-helper/
+# Praxis Swarm local tools, application state and verification evidence.
+/.swarm-local/

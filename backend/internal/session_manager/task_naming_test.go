@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package sessionmanager
 
 import (
@@ -59,6 +61,25 @@ func TestTaskNamingAllShippedAgents(t *testing.T) {
 				t.Fatalf("selected agent/model not preserved: %v, %+v", launcher.backgroundHarnesses, launcher.background)
 			}
 		})
+	}
+}
+
+func TestTaskNamingDisabledBySpawnPolicy(t *testing.T) {
+	launcher := &taskNamingLauncher{result: `{"title":"Generated title","slug":"generated-name"}`}
+	m, st, _ := newChatManager(launcher)
+	m.dataDir = t.TempDir()
+	backgroundScheduled := false
+	m.runBackground = func(work func()) {
+		backgroundScheduled = true
+		work()
+	}
+	cfg := asyncChatSpawnConfig("Fix login redirect")
+	cfg.NameFromPrompt = true
+	cfg.DisableCosmeticModelCalls = true
+	wait, stop := m.startTaskNaming(cfg, domain.SessionRecord{ID: "mer-1", Harness: cfg.Harness}, st.projects["mer"].Config)
+	defer stop()
+	if wait != nil || backgroundScheduled || len(launcher.background) != 0 {
+		t.Fatalf("disabled naming requested model work: waiter=%t scheduled=%t calls=%d", wait != nil, backgroundScheduled, len(launcher.background))
 	}
 }
 

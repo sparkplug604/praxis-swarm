@@ -1,0 +1,250 @@
+{
+  "profile": "supervised-ao-v1",
+  "run_id": "sao-6a5cb993a6a99a2e87607b93",
+  "status": "completed",
+  "source_commit": "22799e4e3922f0a6b1754bc13b54c3b010d848f1",
+  "source_unchanged_reported": true,
+  "workers": [
+    {
+      "task_id": "formatter",
+      "session_id": "ghl03-confirmation-1",
+      "status": "completed",
+      "turn_state": "completed",
+      "requested": {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "effort": "low"
+      },
+      "configured_model": "gpt-5.6-luna",
+      "configured_effort": "low",
+      "model_evidence": "conversation_settings_not_independent_model_telemetry",
+      "provider_turn_id": "codex:41:9fb54e4c-e18d-4ae5-ace9-cd6afeaaf6f0:root01a18990-24b4-7421-910b-32564971fa3b",
+      "started_at": "2026-10-29T21:28:07.608228Z",
+      "completed_at": "2026-10-29T21:28:19.749946Z",
+      "prompt_bytes": 7689,
+      "system_prompt_bytes": 1289,
+      "prompt_evidence": "spawn_response_byte_counts",
+      "packet_bytes": 8739,
+      "candidate_hash": "33c450d7ae9788140bd52f36cd499a020d240ffcf1639fe46357c6d1e1db5eb0",
+      "snapshot_hash": "9ae3dcc620aebe27b99cb1914b99b5526e362cf4a5365b4603baeeff87dc43e4",
+      "independent_controller": "stopped",
+      "usage": {
+        "contextUsed": 25385,
+        "contextWindow": 258400,
+        "inputTokens": 120787,
+        "outputTokens": 1049,
+        "cachedTokens": 94720,
+        "totalTokens": 121836
+      },
+      "changed_file": "duration_formatter.py",
+      "file_sha256": "ed56bb2848f1759dc1221fe63db17e655d714fd0785d2fd721f1c9fc380e32ca"
+    },
+    {
+      "task_id": "parser",
+      "session_id": "ghl03-confirmation-2",
+      "status": "completed",
+      "turn_state": "completed",
+      "requested": {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "effort": "low"
+      },
+      "configured_model": "gpt-5.6-luna",
+      "configured_effort": "low",
+      "model_evidence": "conversation_settings_not_independent_model_telemetry",
+      "provider_turn_id": "codex:41:3ef76854-62cd-4055-8447-8af022e01f0f:root01a18990-2360-77b3-a345-2fac7a8342d8",
+      "started_at": "2026-10-29T21:28:07.268656Z",
+      "completed_at": "2026-10-29T21:28:26.19496Z",
+      "prompt_bytes": 7604,
+      "system_prompt_bytes": 1289,
+      "prompt_evidence": "spawn_response_byte_counts",
+      "packet_bytes": 8651,
+      "candidate_hash": "12b07e3e45e9e578227c121c5009c8b673841c82c494524e9eea0204f717ad66",
+      "snapshot_hash": "32eb5ddcf265678a8a2b5e031658282a216cf279780b6d735c77d8ac36ca4344",
+      "independent_controller": "stopped",
+      "usage": {
+        "contextUsed": 25896,
+        "contextWindow": 258400,
+        "inputTokens": 142245,
+        "outputTokens": 2026,
+        "cachedTokens": 122240,
+        "totalTokens": 144271
+      },
+      "changed_file": "duration_parser.py",
+      "file_sha256": "a42b761b278a4ac7e75b27be8227c1d6bef73f29f1a27a8bd1d7486774310f97"
+    }
+  ],
+  "turn_overlap_seconds": 12.141718,
+  "both_turns_completed": true,
+  "all_tests_passed": true,
+  "worker_usage_total": {
+    "inputTokens": 263032,
+    "outputTokens": 3075,
+    "cachedTokens": 216960,
+    "totalTokens": 266107
+  },
+  "usage_scope": "Provider-reported worker conversation totals only; cached input included in input. Coordinator usage, billing and comparative savings not established.",
+  "automatic_integration": false,
+  "runtime_qualification": "open",
+  "recorded_at": "2026-10-29",
+  "qualification": "supervised_two_worker_confirmation_passed",
+  "tested_ao_binary_sha256": "bf0a61ba2a29adee01382894a09fe80650c471548fb4199e8bbb69db80826cf4",
+  "maximum_workers": 2,
+  "automatic_retries": false,
+  "model_substitution": false,
+  "independent_native_telemetry": {
+    "formatter": {
+      "source": "allowlisted native transcript fields; raw text excluded",
+      "session": {
+        "id": "01a18990-2430-7441-9daa-e3f36b7d89dd",
+        "originator": "agent-orchestrator",
+        "cli_version": "0.153.4",
+        "model_provider": "openai"
+      },
+      "turn_contexts": [
+        {
+          "turn_id": "01a18990-24b4-7421-910b-32564971fa3b",
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox_policy": {
+            "type": "workspace-write",
+            "network_access": false
+          },
+          "workspace_matches": true
+        }
+      ],
+      "task_events": [
+        {
+          "timestamp": "2026-10-29T21:28:07.646Z",
+          "type": "task_started",
+          "turn_id": "01a18990-24b4-7421-910b-32564971fa3b"
+        },
+        {
+          "timestamp": "2026-10-29T21:28:19.746Z",
+          "type": "task_complete",
+          "turn_id": "01a18990-24b4-7421-910b-32564971fa3b"
+        }
+      ],
+      "native_developer_message_characters": [
+        32615
+      ],
+      "native_base_instruction_characters": 17730,
+      "final_usage": {
+        "total_token_usage": {
+          "input_tokens": 120787,
+          "cached_input_tokens": 94720,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1049,
+          "reasoning_output_tokens": 174,
+          "total_tokens": 121836
+        },
+        "last_token_usage": {
+          "input_tokens": 25315,
+          "cached_input_tokens": 24704,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 70,
+          "reasoning_output_tokens": 16,
+          "total_tokens": 25385
+        },
+        "model_context_window": 258400
+      },
+      "status": "observed"
+    },
+    "parser": {
+      "source": "allowlisted native transcript fields; raw text excluded",
+      "session": {
+        "id": "01a18990-22af-7ec2-89a4-5fde07c33a7a",
+        "originator": "agent-orchestrator",
+        "cli_version": "0.153.4",
+        "model_provider": "openai"
+      },
+      "turn_contexts": [
+        {
+          "turn_id": "01a18990-2360-77b3-a345-2fac7a8342d8",
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox_policy": {
+            "type": "workspace-write",
+            "network_access": false
+          },
+          "workspace_matches": true
+        }
+      ],
+      "task_events": [
+        {
+          "timestamp": "2026-10-29T21:28:07.295Z",
+          "type": "task_started",
+          "turn_id": "01a18990-2360-77b3-a345-2fac7a8342d8"
+        },
+        {
+          "timestamp": "2026-10-29T21:28:26.192Z",
+          "type": "task_complete",
+          "turn_id": "01a18990-2360-77b3-a345-2fac7a8342d8"
+        }
+      ],
+      "native_developer_message_characters": [
+        32615
+      ],
+      "native_base_instruction_characters": 17730,
+      "final_usage": {
+        "total_token_usage": {
+          "input_tokens": 142245,
+          "cached_input_tokens": 122240,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2026,
+          "reasoning_output_tokens": 477,
+          "total_tokens": 144271
+        },
+        "last_token_usage": {
+          "input_tokens": 25760,
+          "cached_input_tokens": 24704,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 136,
+          "reasoning_output_tokens": 53,
+          "total_tokens": 25896
+        },
+        "model_context_window": 258400
+      },
+      "status": "observed"
+    }
+  },
+  "independent_integrity": {
+    "source_commit_and_files_unchanged": true,
+    "candidate_scope_changes": {
+      "formatter": [
+        "duration_formatter.py"
+      ],
+      "parser": [
+        "duration_parser.py"
+      ]
+    },
+    "candidate_hashes_verified": true,
+    "native_model_effort_permissions_verified": true,
+    "native_completed_turns": 2,
+    "independent_controller_stops": 2,
+    "independent_review": "No concrete code/contract defect; result and native counters consistent. Review did not rerun models/tests."
+  },
+  "tests": [
+    {
+      "runtime": "Python 3.9.6",
+      "exit_code": 0,
+      "test_methods": 13
+    },
+    {
+      "runtime": "Python 3.14.3",
+      "exit_code": 0,
+      "test_methods": 13
+    }
+  ],
+  "shutdown": {
+    "exit_code": 0,
+    "health_reachable": false,
+    "run_file_present": false
+  },
+  "scope": "One authorized fresh supervised Mac confirmation; does not qualify the exact-copy runtime, unattended recovery, automated acceptance/integration, or token savings.",
+  "evaluation_note": "Initial local evaluator Python 3.9 ISO parser rejected a valid five-digit timestamp before tests; unchanged evaluator rerun under Python 3.14.3. Frozen candidates/oracle unchanged. Candidate tests executed on both Python 3.9.6 and 3.14.3."
+}

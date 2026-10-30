@@ -1,6 +1,8 @@
 // Package ptyregistry is a sideband JSON list of live Windows pty-host
 // processes so ao stop can find and graceful-kill them even when session
 // metadata is lost. Ported from agent-orchestrator's windows-pty-registry.ts.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package ptyregistry
 
 import (
@@ -20,6 +22,9 @@ type Entry struct {
 	PipePath     string `json:"pipePath"`
 	LaunchID     string `json:"launchId,omitempty"`
 	RegisteredAt string `json:"registeredAt"` // RFC3339; set by caller
+	// RetainUntilUnregistered preserves diagnostic ownership when host PID
+	// death alone cannot prove that its descendants are absent.
+	RetainUntilUnregistered bool `json:"retainUntilUnregistered,omitempty"`
 }
 
 // pidAlive is the PID-liveness probe. Tests replace it with a fake.
@@ -69,6 +74,11 @@ func SetRunFilePath(path string) {
 	}
 	overrideDir = filepath.Dir(path)
 }
+
+// Path reports the currently selected registry file without reading or writing
+// it. A diagnostic binding uses this to reject a later global scope change.
+// Like SetRunFilePath, it must not race with daemon startup configuration.
+func Path() (string, error) { return registryFile() }
 
 // registryFile resolves the pty-host registry path: overrideDir joined with
 // the registry filename when set via SetRunFilePath, otherwise
@@ -289,9 +299,11 @@ func scanLocked(ctx context.Context) (entries []Entry, complete bool, err error)
 		if err := ctx.Err(); err != nil {
 			return live, false, err
 		}
-		if e.PtyHostPID == 0 && e.PipePath == UnresolvedPipePath {
+		if e.RetainUntilUnregistered || (e.PtyHostPID == 0 && e.PipePath == UnresolvedPipePath) {
 			// A prelaunch reservation has no PID to probe. Retain it until an
 			// exact owner replaces or explicitly unregisters the reservation.
+			// A diagnostic reservation may also retain a known host PID whose
+			// death does not settle descendant ownership.
 			live = append(live, e)
 		} else if pidAlive(e.PtyHostPID) {
 			live = append(live, e)

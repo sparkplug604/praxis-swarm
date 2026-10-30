@@ -1,5 +1,7 @@
 //go:build darwin || linux
 
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -9,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -28,14 +31,24 @@ func defaultSpawnHost(ctx context.Context, sessionID, cwd string, argv []string,
 	}
 
 	envAssignments, argv := stripEnvAssignments(argv)
-	args := ptyHostArgs(sessionID, cwd, argv, opts)
 	merged := interactiveTerminalEnv(os.Environ(), env, envAssignments)
+	return spawnUnixHost(ctx, exe, sessionID, cwd, argv, merged, opts, false, nil)
+}
+
+// spawnUnixHost is shared by the ordinary launcher and the explicitly bound
+// diagnostic runtime. retainStartedPID preserves uncertainty after Start even
+// if killing the host succeeds: host death does not prove descendants exited.
+func spawnUnixHost(ctx context.Context, exe, sessionID, cwd string, argv, env []string, opts HostOptions, retainStartedPID bool, onStarted func(*os.Process)) (string, int, error) {
+	if err := ctx.Err(); err != nil {
+		return "", 0, err
+	}
+	args := ptyHostArgs(sessionID, cwd, argv, opts)
 
 	// Deliberately do not use CommandContext: once READY is received the host
 	// must survive cancellation of the request that created it.
 	cmd := exec.Command(exe, args...) //nolint:forbidigo // detached PTY host must outlive request cancellation
 	cmd.Dir = cwd
-	cmd.Env = merged
+	cmd.Env = env
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
 	// Use explicit files instead of Cmd.StdoutPipe or a non-file Stderr writer.
@@ -62,7 +75,18 @@ func defaultSpawnHost(ctx context.Context, sessionID, cwd string, argv []string,
 		_ = stderrFile.Close()
 		return "", 0, fmt.Errorf("%s pty spawn: start: %w", runtime.GOOS, err)
 	}
+	if onStarted != nil {
+		onStarted(cmd.Process)
+	}
 	_ = childStdout.Close()
+	failStarted := func(cause error) (string, int, error) {
+		pid := cmd.Process.Pid
+		stopFailedUnixSpawn(cmd, stdout, stderrFile)
+		if !retainStartedPID {
+			pid = 0
+		}
+		return "", pid, cause
+	}
 
 	type readyResult struct {
 		addr string
@@ -94,8 +118,7 @@ func defaultSpawnHost(ctx context.Context, sessionID, cwd string, argv []string,
 	select {
 	case result := <-readyC:
 		if result.err != nil {
-			stopFailedUnixSpawn(cmd, stdout, stderrFile)
-			return "", 0, result.err
+			return failStarted(result.err)
 		}
 		pid := cmd.Process.Pid
 		_ = stdout.Close()
@@ -106,12 +129,21 @@ func defaultSpawnHost(ctx context.Context, sessionID, cwd string, argv []string,
 		go func() { _ = cmd.Wait() }()
 		return result.addr, pid, nil
 	case <-timer.C:
-		stopFailedUnixSpawn(cmd, stdout, stderrFile)
-		return "", 0, fmt.Errorf("%s pty spawn: pty-host startup timeout (%s)", runtime.GOOS, spawnReadyTimeout)
+		return failStarted(fmt.Errorf("%s pty spawn: pty-host startup timeout (%s)", runtime.GOOS, spawnReadyTimeout))
 	case <-ctx.Done():
-		stopFailedUnixSpawn(cmd, stdout, stderrFile)
-		return "", 0, ctx.Err()
+		return failStarted(ctx.Err())
 	}
+}
+
+// explicitUnixEnvironment serializes exactly the supplied environment. An empty
+// non-nil slice is intentional: exec.Cmd treats nil as ambient inheritance.
+func explicitUnixEnvironment(env map[string]string) []string {
+	entries := make([]string, 0, len(env))
+	for key, value := range env {
+		entries = append(entries, key+"="+value)
+	}
+	sort.Strings(entries)
+	return entries
 }
 
 func readUnixSpawnDiagnostics(stderr *os.File) string {

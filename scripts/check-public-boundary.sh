@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Modified for Praxis Swarm: local-state exclusions and public-source verification.
 # Fails if this public repository depends on the private AO Cloud control
 # plane (OrchestratorInc/ao-control-plane). Everything a user installs must
 # build from the code in this repository alone; the control plane is reached
@@ -15,9 +16,13 @@ fail() {
 
 # 1. go.work may only use directories that exist in this checkout.
 if [[ -f go.work ]]; then
-	while read -r dir; do
+	# Keep discovery outside process substitution: its failures otherwise do
+	# not reach set -e, and a missing Go executable incorrectly reports success.
+	workspace_dirs="$(go work edit -json | python3 -c 'import json,sys; [print(u["DiskPath"]) for u in json.load(sys.stdin).get("Use") or []]')"
+	while IFS= read -r dir; do
+		[[ -z "$dir" ]] && continue
 		[[ -d "$dir" ]] || fail "go.work uses $dir, which is not in this repository"
-	done < <(go work edit -json | python3 -c 'import json,sys; [print(u["DiskPath"]) for u in json.load(sys.stdin).get("Use") or []]')
+	done <<< "$workspace_dirs"
 fi
 
 # 2. The control plane lives in its own repository.

@@ -1,6 +1,8 @@
 // host_main.go is the RunHost entrypoint for the "ao pty-host" subcommand.
 // It is cross-platform: the loopback TCP bind and signal wiring work on all
 // OSes; native PTY creation is OS-gated via build tags.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -21,8 +23,8 @@ import (
 // the process starts immediately at the default grid.
 //
 // It binds 127.0.0.1:0 (OS assigns the port), creates the native PTY, prints
-// "READY:<pid> <port>\n" to stdout (the parent process reads this to learn the
-// port), installs SIGTERM/SIGINT handlers, then runs Serve. Returns a process
+// "READY:<pid> <port>\n" to stdout after installing SIGTERM/SIGINT handlers
+// (the parent process reads this to learn the port), then runs Serve. Returns a process
 // exit code.
 //
 // ponytail: loopback bind only; any local process on this host can connect to
@@ -31,7 +33,7 @@ import (
 func RunHost(args []string, stdout io.Writer) int {
 	opts, args := splitHostOptionArgs(args)
 	if len(args) < 3 {
-		fmt.Fprintf(os.Stderr, "usage: ao pty-host [--start=attach] [--surface=lazy] <sessionId> <cwd> <shellCmd> [shellArg...]\n")
+		fmt.Fprintf(os.Stderr, "usage: ao pty-host [--start=attach] [--surface=lazy] [--stop=fenced] <sessionId> <cwd> <shellCmd> [shellArg...]\n")
 		return 1
 	}
 
@@ -39,6 +41,14 @@ func RunHost(args []string, stdout io.Writer) int {
 	cwd := args[1]
 	shellCmd := args[2]
 	shellArgs := args[3:]
+	// Freeze identity before chdir, listener creation or worker creation. The
+	// worker's later environment changes cannot change this host's generation.
+	launchGeneration := os.Getenv(runtimeLaunchIDEnv)
+	identity := FencedStopRequest{Version: FencedStopProtocolVersion, SessionID: sessionID, Generation: launchGeneration}
+	if opts.RequireFencedStop && !validFencedStopRequest(identity) {
+		fmt.Fprintln(os.Stderr, "pty-host: fenced stop requires a valid session and launch generation")
+		return 1
+	}
 	if err := os.Chdir(cwd); err != nil {
 		fmt.Fprintf(os.Stderr, "pty-host [%s]: chdir %s: %v\n", sessionID, cwd, err)
 		return 1
@@ -76,15 +86,13 @@ func RunHost(args []string, stdout io.Writer) int {
 		}
 	}
 
-	// Print READY after both the listener and the PTY are up.
-	_, _ = fmt.Fprintf(stdout, "READY:%d %d\n", pty.PID(), port)
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	// Install signal handlers so SIGTERM/SIGINT trigger graceful shutdown.
 	sigC := make(chan os.Signal, 1)
 	signal.Notify(sigC, syscall.SIGTERM, syscall.SIGINT)
+	defer signal.Stop(sigC)
 	go func() {
 		select {
 		case sig := <-sigC:
@@ -96,12 +104,18 @@ func RunHost(args []string, stdout io.Writer) int {
 
 	ring := NewRing()
 	cfg := ServeConfig{
-		SessionID:   sessionID,
-		Listener:    ln,
-		PTY:         pty,
-		Ring:        ring,
-		LazySurface: opts.LazySurface,
+		SessionID:         sessionID,
+		Listener:          ln,
+		PTY:               pty,
+		Ring:              ring,
+		LazySurface:       opts.LazySurface,
+		RequireFencedStop: opts.RequireFencedStop,
+		LaunchGeneration:  launchGeneration,
 	}
+
+	// READY allows immediate parent-side cleanup, including after registration
+	// failure. Install signal handling first so that cleanup reaches PTY.Close.
+	_, _ = fmt.Fprintf(stdout, "READY:%d %d\n", pty.PID(), port)
 
 	if err := Serve(ctx, cfg); err != nil {
 		fmt.Fprintf(os.Stderr, "pty-host [%s]: serve: %v\n", sessionID, err)

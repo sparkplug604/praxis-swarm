@@ -5,6 +5,8 @@
 // down gracefully (PTY dispose first, then clients, then listener).
 //
 // This file is cross-platform; build-tagged files provide the native PTY.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -55,6 +57,10 @@ type ServeConfig struct {
 	// LazySurface defers the rendered surface until a styled-output read
 	// first asks for it, then keeps it current; see asyncSurface.
 	LazySurface bool
+	// Fenced identity is captured before the worker starts and never refreshed
+	// from the worker environment or the mutable registry.
+	RequireFencedStop bool
+	LaunchGeneration  string
 }
 
 // Serve runs the host event loop until the listener closes or Shutdown is
@@ -143,8 +149,11 @@ type host struct {
 	// = none applied yet). Guarded by mu; used to skip redundant resizes.
 	curCols, curRows int
 
-	shutdownOnce sync.Once
-	shutdownC    chan struct{} // closed when Shutdown is called
+	shutdownOnce      sync.Once
+	shutdownC         chan struct{} // closed when Shutdown is called
+	ptyCloseOnce      sync.Once
+	ptyCloseErr       error  // published by ptyCloseOnce; shared by stop and shutdown
+	ptyCloseErrorText string // bounded immutable receipt error, published with it
 }
 
 // applyLargestLocked sizes the shared PTY to a SINGLE client's grid — the
@@ -205,7 +214,10 @@ func (h *host) run(ctx context.Context) error {
 	// runAcceptLoop accepts connections until the listener closes. A listener
 	// close is normal (shutdown or external) and is treated as success.
 	h.runAcceptLoop()
-	return nil
+	// Join any concurrent shutdown and clean up even when the caller closed the
+	// listener directly. The once also publishes the retained PTY close error.
+	h.shutdown()
+	return h.ptyCloseErr
 }
 
 // runAcceptLoop runs the Accept loop until the listener closes or returns an
@@ -231,7 +243,7 @@ func (h *host) shutdown() {
 		h.surface.stop()
 
 		// 1. Dispose the PTY first (critical ordering).
-		_ = h.cfg.PTY.Close()
+		_ = h.closePTY()
 
 		// 2. Brief grace so the OS ConPTY helper can clean up.
 		time.Sleep(50 * time.Millisecond)
@@ -472,6 +484,13 @@ func (h *host) handleConn(conn net.Conn) {
 	// 200 KB, on a path that already held this lock while EncodeMessage
 	// copied the same bytes.
 	h.mu.Lock()
+	select {
+	case <-h.shutdownC:
+		h.mu.Unlock()
+		client.close(conn)
+		return
+	default:
+	}
 	snap := h.cfg.Ring.Replay()
 	if prefix := h.modes.Restore(snap); len(prefix) > 0 {
 		snap = append(prefix, snap...)
@@ -566,8 +585,14 @@ func (h *host) handleClientMsg(conn net.Conn, msgType byte, payload []byte) {
 		h.sendTo(conn, statusFrame(alive, pid, codePtr))
 
 	case MsgKillReq:
+		if h.cfg.RequireFencedStop {
+			return // no legacy kill bypass on an opted-in host
+		}
 		// Trigger graceful shutdown; returns immediately (idempotent).
 		go h.shutdown()
+
+	case MsgFencedStopReq:
+		h.handleFencedStop(conn, payload)
 	}
 }
 

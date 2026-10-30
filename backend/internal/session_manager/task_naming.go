@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package sessionmanager
 
 import (
@@ -25,7 +27,7 @@ type generatedTaskName struct {
 
 // taskNamingApplies reports whether a start gets a generated branch name.
 func taskNamingApplies(cfg ports.SpawnConfig) bool {
-	return cfg.NameFromPrompt && cfg.Branch == "" && cfg.Kind == domain.KindWorker && strings.TrimSpace(cfg.Prompt) != ""
+	return !cfg.DisableCosmeticModelCalls && cfg.NameFromPrompt && cfg.Branch == "" && cfg.Kind == domain.KindWorker && strings.TrimSpace(cfg.Prompt) != ""
 }
 
 // startTaskNaming overlaps the one cosmetic model call with the whole start.

@@ -1,5 +1,7 @@
 // spawn.go - shared detached pty-host spawn support. Platform files provide
 // defaultSpawnHost; tests can inject a hostSpawner through Options.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package conpty
 
 import (
@@ -16,6 +18,9 @@ type HostOptions struct {
 	StartOnAttach bool
 	// LazySurface builds the rendered surface only when it is first read.
 	LazySurface bool
+	// RequireFencedStop rejects legacy kill messages and requires an exact
+	// session/generation match before a protocol request can close the PTY.
+	RequireFencedStop bool
 }
 
 // hostSpawner starts a detached pty-host for the session and returns its
@@ -29,6 +34,7 @@ type hostSpawner func(ctx context.Context, sessionID, cwd string, argv []string,
 const (
 	startOnAttachArg = "--start=attach"
 	lazySurfaceArg   = "--surface=lazy"
+	fencedStopArg    = "--stop=fenced"
 )
 
 // ptyHostArgs builds the pty-host subcommand argv:
@@ -40,6 +46,9 @@ func ptyHostArgs(sessionID, cwd string, argv []string, opts HostOptions) []strin
 	}
 	if opts.LazySurface {
 		args = append(args, lazySurfaceArg)
+	}
+	if opts.RequireFencedStop {
+		args = append(args, fencedStopArg)
 	}
 	args = append(args, sessionID, cwd)
 	return append(args, argv...)
@@ -55,6 +64,8 @@ func splitHostOptionArgs(args []string) (HostOptions, []string) {
 			opts.StartOnAttach = true
 		case lazySurfaceArg:
 			opts.LazySurface = true
+		case fencedStopArg:
+			opts.RequireFencedStop = true
 		default:
 			return opts, args
 		}

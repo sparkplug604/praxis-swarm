@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "milestone": "GHL-02",
+  "date": "2026-10-29",
+  "execution_result": "demonstrated",
+  "code_acceptance": "demo suite passes; portability defect remains in frozen submissions",
+  "profile": "supervised inherited AO chat workflow; not the Praxis exact-copy scheduler",
+  "platform": "Apple Silicon macOS",
+  "python_demo_version": "3.9.6",
+  "codex_version": "0.153.4",
+  "ao_binary_sha256": "20a8912bf60bbff74f3b0c88e84ade1745feff130139da0c5bdffd7903881cce",
+  "fixture_commit": "a47d6b74ded2f1ec3ae8cfda0981fca34a883083",
+  "workers": [
+    {
+      "assignment": "parse",
+      "session_id": "ghl02-2",
+      "native_session_id": "01a18962-1c89-7de3-94bb-cc70e84deb80",
+      "provider_turn_id": "codex:41:4085429b-6d8d-470b-bf16-d2f3428b120a:root01a18962-1d16-7db0-9f3c-593864365e73",
+      "requested_model": "gpt-5.6-luna",
+      "requested_effort": "low",
+      "native_observed_model": "gpt-5.6-luna",
+      "native_observed_effort": "low",
+      "approval_policy": "on-request",
+      "sandbox_policy": {
+        "type": "workspace-write",
+        "network_access": false
+      },
+      "started_at": "2026-10-29T20:37:51Z",
+      "completed_at": "2026-10-29T20:38:02Z",
+      "controller_after_stop": "stopped",
+      "changed_files": [
+        "parse_duration.py"
+      ],
+      "candidate_sha256": "926a98e51af3f3a026e50d9a6a871fd0ebabbf521a30d328c4bf75f51fe30784",
+      "usage": {
+        "contextUsed": 24393,
+        "contextWindow": 258400,
+        "inputTokens": 93647,
+        "outputTokens": 1073,
+        "cachedTokens": 79744,
+        "totalTokens": 94720
+      }
+    },
+    {
+      "assignment": "format",
+      "session_id": "ghl02-1",
+      "native_session_id": "01a18962-1dcd-79e3-8950-2bbdc4252747",
+      "provider_turn_id": "codex:41:11698a96-f1aa-45f0-b7a1-d1137d1b8ec2:root01a18962-1e3f-7d31-a49c-e4fdf4459375",
+      "requested_model": "gpt-5.6-luna",
+      "requested_effort": "low",
+      "native_observed_model": "gpt-5.6-luna",
+      "native_observed_effort": "low",
+      "approval_policy": "on-request",
+      "sandbox_policy": {
+        "type": "workspace-write",
+        "network_access": false
+      },
+      "started_at": "2026-10-29T20:37:51Z",
+      "completed_at": "2026-10-29T20:38:09Z",
+      "controller_after_stop": "stopped",
+      "changed_files": [
+        "format_duration.py"
+      ],
+      "candidate_sha256": "470472bc20caea090a684cea7d77c32343b743021c90a27c0a7a1343ea06b6a0",
+      "usage": {
+        "contextUsed": 26179,
+        "contextWindow": 258400,
+        "inputTokens": 144627,
+        "outputTokens": 1059,
+        "cachedTokens": 124288,
+        "totalTokens": 145686
+      }
+    }
+  ],
+  "overlap_seconds": 11.0,
+  "overlap_evidence": "Intersecting completed provider-backed turn intervals recorded by AO; second-resolution timestamps. This is not a measured speedup.",
+  "combined_tests": {
+    "method_count": 10,
+    "exit_code": 0,
+    "scope": "Six original methods plus four independent boundary/roundtrip methods on frozen combined source."
+  },
+  "additional_review": {
+    "python396_5001_digits": "parse and format pass",
+    "python3143_5001_digits": "both raise ValueError with default4300-digit conversion limit",
+    "defect": "The no-maximum-magnitude fixture contract is not met on Python3.14.3. Submissions remain unchanged; no correction launch."
+  },
+  "source_preservation": true,
+  "workspace_isolation": "Distinct AO worktrees; native workspace-write, on-request and network disabled were observed. No adversarial isolation or detached descendant containment qualification.",
+  "shutdown": {
+    "both_exit_agent_http": 200,
+    "both_controllers": "stopped",
+    "daemon_shutdown_http": 202,
+    "daemon_exit_code": 0,
+    "owned_pid_listener_and_runfile_absent": true
+  },
+  "worker_usage": {
+    "inputTokens": 238274,
+    "outputTokens": 2132,
+    "cachedTokens": 204032,
+    "totalTokens": 240406,
+    "inputExcludingCache": 34242
+  },
+  "usage_scope": "Two worker conversations only; cached tokens are included in input, not additional. Coordinator/reviewer usage and billing cost are excluded/unknown. No savings comparison.",
+  "context_observation": {
+    "ao_system_prompt_bytes_per_worker": 15718,
+    "native_developer_message_characters_per_worker": 47022,
+    "base_instruction_characters_per_worker": 18069,
+    "finding": "Inherited AO instructions plus native memory/skill context add substantial overhead; optimize and measure in GHL-03. Raw transcripts are not distributed."
+  },
+  "limits": [
+    "No Praxis plan-to-launch entrypoint was used. GHL-03 remains open.",
+    "SWM-06 and exact-copy live qualification remain open.",
+    "No retries, model substitution, production merge or publication.",
+    "Known runner error-recovery gaps were reviewed; both stops succeeded and were independently checked for this trial. The local diagnostic runner is not a supported product command."
+  ],
+  "evidence": "Sanitized derivative of locally retained launch/stop responses, native telemetry, hashes and test logs. Raw records, credentials, workstation paths and personal context are excluded."
+}

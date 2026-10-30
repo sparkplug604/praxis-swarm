@@ -1,6 +1,8 @@
 // Package daemon owns the Agent Orchestrator backend process: config loading,
 // loopback HTTP serving, durable storage, CDC fan-out, lifecycle wiring, and
 // graceful shutdown.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package daemon
 
 import (
@@ -74,6 +76,7 @@ import (
 	projectsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/project"
 	reportsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/report"
 	settingssvc "github.com/aoagents/agent-orchestrator/backend/internal/service/settings"
+	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/supervised"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/systemcheck"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/systeminstall"
 	usagesvc "github.com/aoagents/agent-orchestrator/backend/internal/service/usage"
@@ -1003,7 +1006,10 @@ func Run(buildVersion string) error {
 	// Terminal hooks pass the hook process gate: a Claude process other than
 	// the session's own must not replace its activity or transcript.
 	hookActivity := hookprocess.New(lcStack.LCM, store, runtimeAdapter, nil, log)
+	supervisedSwarmSvc := supervised.New(ctx, store, &supervisedAORuntime{store: store, sessions: sessionSvc, chat: chatSvc}, filepath.Join(cfg.DataDir, "swarm-supervised"))
+	defer supervisedSwarmSvc.Close()
 	srv, err := httpd.NewWithDeps(cfg, log, termMgr, httpd.APIDeps{
+		SupervisedSwarm:    supervisedSwarmSvc,
 		Awake:              awakeSvc,
 		Projects:           projectSvc,
 		ArtifactVersions:   lcStack.ArtifactVersions,
@@ -1285,6 +1291,7 @@ func Run(buildVersion string) error {
 	// turns; the replacement daemon reconnects to the same initialized stream and
 	// consumes host-replayed output. Explicit session termination, not daemon
 	// shutdown, destroys them.
+	supervisedSwarmSvc.Close()
 	chatStopCtx, chatCancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 	chatSvc.StopAll(chatStopCtx)
 	chatCancel()

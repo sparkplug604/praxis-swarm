@@ -1,5 +1,10 @@
 # agent-orchestrator rewrite docs
 
+Modified for Praxis Swarm: start with the [supervised CLI guide](swarm/SUPERVISED_WORKFLOW.md),
+[offline quick start](swarm/QUICKSTART.md) and [release notes](swarm/RELEASE_NOTES.md).
+The inherited AO documentation below covers the foundation; its desktop distribution
+is separate from this source release.
+
 Agent Orchestrator runs as a long-running Go backend daemon
 (`backend/`) plus an Electron + TypeScript frontend (`frontend/`). The backend
 supervises coding-agent sessions and exposes daemon control, project/session
@@ -22,8 +27,7 @@ in [gemini-cli.md](gemini-cli.md).
 | [scm-observer.md](scm-observer.md)                     | SCM subsystem: polling pipeline, durable-state invariants, PR identity model, and the rename/transfer design.         |
 | [backend-code-structure.md](backend-code-structure.md) | Package ownership rules for the Go backend: domain, services, ports, adapters, storage, HTTP, CLI, and daemon wiring. |
 | [cli/README.md](cli/README.md)                         | CLI commands and daemon control surface.                                                                              |
-| [cloud-development.md](cloud-development.md)           | Current public Cloud sources, local stack, tests, and hosted-environment boundaries. |
-| [cloud-refactor.md](cloud-refactor.md)                 | Historical split design for shared Cloud contracts and UI; not the current setup guide. |
+| [Cloud API contract](../contracts/cloud/openapi.yaml) | Public contract; the private control plane is maintained separately. |
 | [self-hosted-remote.md](self-hosted-remote.md)         | Experimental multi-host setup, client workflow, security boundary, and current limits.                                  |
 | [development.md](development.md)                       | Prerequisites, build steps, running tests, and troubleshooting for local development.                                 |
 | [harnesses/unreal-agent.md](harnesses/unreal-agent.md) | Built-in Unreal Agent Chat setup, provider environment, persistence, and current limits.                              |
@@ -35,7 +39,7 @@ in [gemini-cli.md](gemini-cli.md).
 | [telemetry.md](telemetry.md)                           | User-facing overview of product telemetry, privacy safeguards, and opt-out controls.                                    |
 | [posthog-cost-controls.md](posthog-cost-controls.md)   | PostHog event-name migration, ingestion drop rules, and dashboard queries for reducing telemetry spend.              |
 
-See [startup-cues.md](startup-cues.md) for command cues that gate a new worktree’s opening turn.
+See [startup-cues.md](startup-cues.md) for command cues that gate a new worktree's opening turn.
 
 ## Mental model
 

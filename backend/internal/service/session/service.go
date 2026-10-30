@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package session
 
 import (
@@ -426,7 +428,9 @@ func (s *Service) spawn(ctx context.Context, cfg ports.SpawnConfig) (domain.Sess
 // exactly once. Client-request replays return before reaching it.
 func (s *Service) spawnWithTelemetry(ctx context.Context, cfg ports.SpawnConfig, project domain.ProjectRecord) (domain.SessionRecord, int, int, error) {
 	// CLI and orchestrator workers use this same naming policy as desktop tasks.
-	if !cfg.NameFromPrompt && cfg.Kind == domain.KindWorker && project.ID != "" &&
+	if cfg.DisableCosmeticModelCalls {
+		cfg.NameFromPrompt = false
+	} else if !cfg.NameFromPrompt && cfg.Kind == domain.KindWorker && project.ID != "" &&
 		project.Kind.WithDefault() != domain.ProjectKindScratch && strings.TrimSpace(cfg.Branch) == "" && strings.TrimSpace(cfg.Prompt) != "" {
 		cfg.NameFromPrompt = true
 		cfg.KeepDisplayName = cfg.DisplayName != ""

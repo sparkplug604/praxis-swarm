@@ -1,208 +1,138 @@
-<div align="center">
+# Praxis Swarm
 
-<img src="docs/assets/readme/banner.png" alt="Orchestrator.inc" width="100%" />
+**Make model handoffs explicit. Run parallel coding agents with results you can review.**
 
-<h3>Stop babysitting agents. Start merging real work.</h3>
+Praxis Swarm gives each worker a task contract, a bounded handoff packet and an
+owned file scope, then keeps the execution record and candidate changes together.
+Supply a plan, let two agents work in separate worktrees, and review their frozen
+outputs before deciding what to accept. It is an independent fork of
+[Agent Orchestrator](https://github.com/OrchestratorInc/agent-orchestrator), which
+provides the daemon, desktop and agent adapters.
 
-<p>
-  Run a fleet of coding agents while keeping branches, reviews, and CI failures manageable.
-</p>
+**Supervised alpha candidate.** The `ao swarm` CLI has completed two concurrent
+Luna/low assignments on one Apple Silicon Mac, with independently tested outputs
+and observed controller stops. Public source publication is being prepared for
+[`sparkplug604/praxis-swarm`](https://github.com/sparkplug604/praxis-swarm);
+[publication status](docs/swarm/PUBLICATION.md) owns the remaining release checks.
+There is no Praxis installer or binary release in this candidate.
 
-[![GitHub stars](https://img.shields.io/github/stars/OrchestratorInc/agent-orchestrator?style=flat&logo=github&color=1A9BF0)](https://github.com/OrchestratorInc/agent-orchestrator/stargazers)
-[![GitHub release](https://img.shields.io/github/v/release/OrchestratorInc/agent-orchestrator?style=flat&logo=github&color=1A9BF0)](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest)
-[![GitHub downloads](https://img.shields.io/github/downloads/OrchestratorInc/agent-orchestrator/total?style=flat&logo=github&color=1A9BF0)](https://github.com/OrchestratorInc/agent-orchestrator/releases)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-0B1A33?style=flat)](LICENSE)
-[![X](https://img.shields.io/badge/@useOrchestrator-0B1A33?style=flat&logo=x&logoColor=white)](https://x.com/useOrchestrator)
-[![Discord](https://img.shields.io/badge/Discord-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.com/invite/UZv7JjxbwG)
+## Try it without a model account
 
-<br />
+You need Bash, Git, Python 3 and Go 1.27.1 on PATH. The documented setup is macOS;
+other hosts are not yet qualified. Once the source publication is available:
 
-[**Get Orchestrator.inc**](https://orchestrator.inc) &nbsp;&bull;&nbsp; [Documentation](https://docs.orchestrator.inc) &nbsp;&bull;&nbsp; [Releases](https://github.com/OrchestratorInc/agent-orchestrator/releases) &nbsp;&bull;&nbsp; [Contributing](CONTRIBUTING.md) &nbsp;&bull;&nbsp; [Discord](https://discord.com/invite/UZv7JjxbwG)
+```bash
+git clone https://github.com/sparkplug604/praxis-swarm.git
+cd praxis-swarm
+bash scripts/swarm/demo-offline.sh
+```
 
-**English** · [简体中文](translations/README.zh-CN.md) · [日本語](translations/README.ja.md) · [한국어](translations/README.ko.md) · [Español](translations/README.es.md) · [Français](translations/README.fr.md) · [Deutsch](translations/README.de.md) · [Português (Brasil)](translations/README.pt-BR.md)
+From an existing checkout, run just the last command. It prints a new temporary
+output directory containing `report.md`, `report.json` and raw test logs. Success
+requires all four named tests to pass without skips. Failure returns nonzero and
+preserves the logs.
 
-<br />
+This demo exercises real coordination code, SQLite records and overlapping helper
+processes with labelled provider/runtime test doubles. **It launches no models.**
+Go may download public modules or a toolchain on first use; a disconnected run
+requires a prepared cache. See the [offline quick start](docs/swarm/QUICKSTART.md)
+for prerequisites, report interpretation and troubleshooting.
 
-<img src="docs/assets/readme/hero.png" alt="Orchestrator.inc Kanban showing worker sessions grouped by live status" width="100%" />
+## Run two real workers
 
-</div>
+The first live profile takes exactly two independent tasks in one clean local
+repository, with disjoint file scopes and an explicit Codex model/effort. The
+example below creates a disposable duration-parser/formatter project. You also
+need Python 3.8+, a working Codex CLI and an existing login with access to the
+selected model. Check `codex --version` and `codex login status` first.
 
-<br />
+From the checkout root, use a fresh shell and an unused loopback port:
 
-## Why Orchestrator.inc
+```bash
+SWARM_DEMO_ROOT="$(mktemp -d /tmp/praxis-demo.XXXXXX)"
+go -C backend build -o "$SWARM_DEMO_ROOT/ao" ./cmd/ao
+export AO_DATA_DIR="$SWARM_DEMO_ROOT/data"
+export AO_RUN_FILE="$SWARM_DEMO_ROOT/daemon.json"
+export AO_PORT=43220
+export AO_HARNESS_UPDATE_CHECKS=off
+export AO_TELEMETRY_EVENTS=off AO_TELEMETRY_METRICS=off AO_TELEMETRY_REMOTE=off
+python3 scripts/swarm/create-supervised-demo.py \
+  --output-dir "$SWARM_DEMO_ROOT/fixture" \
+  --model gpt-5.6-luna --effort low
+"$SWARM_DEMO_ROOT/ao" daemon >"$SWARM_DEMO_ROOT/daemon.log" 2>&1 &
+```
 
-One coding agent can handle a task. Running several means splitting the work, keeping branches from colliding, and following every change through CI, review, and merge. Orchestrator.inc is a local desktop workspace for that: every task gets its own agent, branch, and worktree, and your code stays on your machine.
+The generator and daemon startup above do not launch workers. Wait until
+`curl --fail "http://127.0.0.1:$AO_PORT/healthz"` succeeds, then register the fixture:
 
-## Features
+```bash
+"$SWARM_DEMO_ROOT/ao" project add --id ghl03-demo \
+  --path "$SWARM_DEMO_ROOT/fixture/repository" --worker-agent codex
+"$SWARM_DEMO_ROOT/ao" project set-config ghl03-demo \
+  --default-branch main --worker-agent codex
+```
 
-### The orchestrator runs the fleet
+**The next command starts two real model sessions and consumes account usage.**
+Token reservations are advisory, not provider spending caps. The daemon owns the
+240-second deadline; an approval request, provider failure or timeout can prevent
+completion.
 
-Tell a project's main agent what you want built. It plans the work, starts a worker for each piece in its own worktree, and comes back only when something needs you.
+```bash
+"$SWARM_DEMO_ROOT/ao" swarm run \
+  --plan "$SWARM_DEMO_ROOT/fixture/plan.json" \
+  --context "$SWARM_DEMO_ROOT/fixture/context.json" \
+  --request-id duration-demo-1 --timeout 240 >"$SWARM_DEMO_ROOT/report.json"
+```
 
-<img src="docs/assets/readme/site/orchestrator.jpg" alt="The orchestrator splitting a billing feature into three workers, each in its own worktree with a different coding agent" width="100%" />
+The CLI waits and writes one combined JSON report. `completed` means both turns
+completed, their controllers were observed stopped, and scoped candidates were
+captured with the source preserved. **It does not mean the code is accepted.**
+Review and independently test the frozen files before integrating them.
+`stopped` may contain partial work; `needs_attention` requires inspection and
+returns a nonzero exit status.
 
-### One board for every session
+Use `ao swarm get RUN_ID` and `ao swarm stop RUN_ID` with the same built binary
+and shell environment. Ctrl-C stops the CLI wait, not the workers. Reuse the same
+request ID and identical input to recover an uncertain submission. After stops
+are confirmed, shut down the scratch daemon with
+`curl --fail -X POST "http://127.0.0.1:$AO_PORT/shutdown"` and retain its data for review.
+The [full supervised guide](docs/swarm/SUPERVISED_WORKFLOW.md) explains report
+paths, recovery, source pinning, shutdown verification and supplying your own plan.
 
-Sessions sort themselves into lanes from the agent, its PR, CI, and reviews, so whatever needs you is on top.
+## What the evidence supports
 
-<img src="docs/assets/readme/site/board.jpg" alt="The Kanban board with Working, Needs you, In review, and Ready to merge lanes" width="100%" />
+| Capability | Current boundary |
+| --- | --- |
+| Explicit handoff contracts and context selection | Implemented and tested backend services; the CLI consumes supplied plans |
+| Offline scheduling, replay and cancellation | Four required regression tests; helper-process overlap is distinct from model overlap |
+| Supplied-plan parallel execution | Two Luna/low workers completed on one Mac, with 12.14 seconds of overlapping provider turns |
+| Reviewable outputs | Frozen candidate files, hashes, tracked-file patches, available usage and stop observations |
+| Acceptance and integration | Human review and independent testing; no automatic merge or acceptance decision |
+| Cost and containment | Advisory budgets; no demonstrated token savings or complete process-containment guarantee |
 
-### CI fails, the right agent fixes it
+The [recorded confirmation](docs/swarm/SUPERVISED_WORKFLOW_RESULT.md) includes
+independent checks of the combined toy implementation on Python 3.9 and 3.14.
+It is evidence for this workflow, not a benchmark of general coding quality.
+The separate exact-copy runtime remains gated. Ordinary AO worktrees are not an
+adversarial sandbox, and manual AO session restoration is outside this fresh-start
+profile. The inherited desktop does not yet expose the Praxis swarm workflow.
 
-Failed checks, review comments, and merge conflicts go back to the worker that owns the branch until the PR is approved. A reviewer agent can read every PR before a person does.
+## Continue from here
 
-<img src="docs/assets/readme/site/feedback.jpg" alt="A pull request timeline where a failed check and a review comment are routed back to Claude Code, which pushes a fix" width="100%" />
+- [Supervised CLI guide](docs/swarm/SUPERVISED_WORKFLOW.md): run, inspect and stop workers; supply your own plan.
+- [Planning and handoff contracts](docs/swarm/PLANNING_AND_HANDOFF.md): task ownership, context and packet limits.
+- [Release notes](docs/swarm/RELEASE_NOTES.md): this candidate's scope and known limits.
+- [Progress](docs/swarm/PROGRESS.md) and [roadmap](docs/swarm/BUILD_PLAN.md): verified work and what remains.
+- [Contributing](CONTRIBUTING.md) and [issues](https://github.com/sparkplug604/praxis-swarm/issues): report a problem or propose a focused improvement.
 
-### Use the agent you already trust
+## Upstream and licensing
 
-Pick the agent and model per task, then work in structured chat or the agent's own terminal UI. Each worker also gets a browser to preview and test its app.
+Built on Agent Orchestrator at commit
+`71bb19f5947a64853ee6d11225bc896563878c50`. Original history and license declarations
+are retained; see [provenance](docs/swarm/UPSTREAM.md), [LICENSE](LICENSE) and
+[third-party declarations](THIRD_PARTY_NOTICES.md). This independent project does
+not imply endorsement by OrchestratorInc or OpenAI.
 
-#### Supported agents
-
-Worker, Chat, and reviewer support differ by agent; the [agent setup guides](https://docs.orchestrator.inc/plugins/agents) have the current matrix.
-
-<table>
-  <tr valign="middle">
-    <td width="33%" valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/claude-code.svg" alt="Claude Code" width="24" height="24" align="middle" /> &nbsp; <b>Claude Code</b></td>
-    <td width="33%" valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/codex.svg" alt="Codex" width="24" height="24" align="middle" /> &nbsp; <b>Codex</b></td>
-    <td width="33%" valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/cursor-dark.svg" /><img src="frontend/src/renderer/assets/agents/cursor-light.svg" alt="Cursor" width="24" height="24" align="middle" /></picture> &nbsp; <b>Cursor</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/opencode-dark.svg" /><img src="frontend/src/renderer/assets/agents/opencode-light.svg" alt="opencode" width="24" height="24" align="middle" /></picture> &nbsp; <b>opencode</b></td>
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/aider.svg" alt="Aider" width="24" height="24" align="middle" /> &nbsp; <b>Aider</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/copilot-dark.svg" /><img src="frontend/src/renderer/assets/agents/copilot-light.svg" alt="GitHub Copilot" width="24" height="24" align="middle" /></picture> &nbsp; <b>GitHub Copilot</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/grok-dark.svg" /><img src="frontend/src/renderer/assets/agents/grok-light.svg" alt="Grok" width="24" height="24" align="middle" /></picture> &nbsp; <b>Grok</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/kimi-dark.svg" /><img src="frontend/src/renderer/assets/agents/kimi-light.svg" alt="Kimi" width="24" height="24" align="middle" /></picture> &nbsp; <b>Kimi</b></td>
-    <td valign="middle" nowrap><img src="docs/assets/readme/agents/pi-coding-agent.svg" alt="Pi" width="24" height="24" align="middle" /> &nbsp; <b>Pi</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/amp-dark.svg" /><img src="frontend/src/renderer/assets/agents/amp-light.svg" alt="Amp" width="24" height="24" align="middle" /></picture> &nbsp; <b>Amp</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/auggie-dark.svg" /><img src="frontend/src/renderer/assets/agents/auggie-light.svg" alt="Auggie" width="24" height="24" align="middle" /></picture> &nbsp; <b>Auggie</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/droid-dark.svg" /><img src="frontend/src/renderer/assets/agents/droid-light.svg" alt="Droid" width="24" height="24" align="middle" /></picture> &nbsp; <b>Droid</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/crush.svg" alt="Crush" width="24" height="24" align="middle" /> &nbsp; <b>Crush</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/cline-dark.svg" /><img src="frontend/src/renderer/assets/agents/cline-light.svg" alt="Cline" width="24" height="24" align="middle" /></picture> &nbsp; <b>Cline</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/goose-dark.svg" /><img src="frontend/src/renderer/assets/agents/goose-light.svg" alt="Goose" width="24" height="24" align="middle" /></picture> &nbsp; <b>Goose</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/qwen-dark.svg" /><img src="frontend/src/renderer/assets/agents/qwen-light.svg" alt="Qwen" width="24" height="24" align="middle" /></picture> &nbsp; <b>Qwen</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/continue-dark.svg" /><img src="frontend/src/renderer/assets/agents/continue-light.svg" alt="Continue" width="24" height="24" align="middle" /></picture> &nbsp; <b>Continue</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/devin-dark.svg" /><img src="frontend/src/renderer/assets/agents/devin-light.svg" alt="Devin" width="24" height="24" align="middle" /></picture> &nbsp; <b>Devin</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/kiro.svg" alt="Kiro" width="24" height="24" align="middle" /> &nbsp; <b>Kiro</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/kilocode-dark.svg" /><img src="frontend/src/renderer/assets/agents/kilocode-light.svg" alt="Kilo Code" width="24" height="24" align="middle" /></picture> &nbsp; <b>Kilo Code</b></td>
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/vibe.svg" alt="Vibe" width="24" height="24" align="middle" /> &nbsp; <b>Vibe</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/muse.svg" alt="Muse" width="24" height="24" align="middle" /> &nbsp; <b>Muse</b></td>
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/agy.svg" alt="Agy" width="24" height="24" align="middle" /> &nbsp; <b>Agy</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/agents/autohand-stacked-dark.png" /><img src="docs/assets/readme/agents/autohand-stacked-light.png" alt="Autohand" width="24" height="24" align="middle" /></picture> <b>Autohand</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/kimchi.svg" alt="Kimchi" width="24" height="24" align="middle" /> &nbsp; <b>Kimchi</b></td>
-    <td valign="middle" nowrap><img src="docs/assets/readme/agents/prime-agent.svg" alt="Prime Agent" width="24" height="24" align="middle" /> &nbsp; <b>Prime Agent</b></td>
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/omp.svg" alt="OMP" width="24" height="24" align="middle" /> &nbsp; <b>OMP</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/fx-dark.svg" /><img src="frontend/src/renderer/assets/agents/fx-light.svg" alt="fx" width="24" height="24" align="middle" /></picture> &nbsp; <b>fx</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/unreal-agent-dark.png" /><img src="frontend/src/renderer/assets/agents/unreal-agent-light.png" alt="Unreal Agent" width="24" height="24" align="middle" /></picture> &nbsp; <b>Unreal Agent</b></td>
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/mimo-code.svg" alt="MiMo Code" width="24" height="24" align="middle" /> &nbsp; <b>MiMo Code</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><img src="frontend/src/renderer/assets/agents/gemini.svg" alt="Gemini CLI" width="24" height="24" align="middle" /> &nbsp; <b>Gemini CLI</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/deepseek-harness-dark.svg" /><img src="frontend/src/renderer/assets/agents/deepseek-harness-light.svg" alt="DeepSeek" width="24" height="24" align="middle" /></picture> &nbsp; <b>DeepSeek</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/opencode-dark.svg" /><img src="frontend/src/renderer/assets/agents/opencode-light.svg" alt="OpenCode 2" width="24" height="24" align="middle" /></picture> &nbsp; <b>OpenCode 2</b></td>
-  </tr>
-  <tr valign="middle">
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/codewhale-dark.svg" /><img src="frontend/src/renderer/assets/agents/codewhale-light.svg" alt="Codewhale" width="24" height="24" align="middle" /></picture> &nbsp; <b>Codewhale</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/command-code-dark.svg" /><img src="frontend/src/renderer/assets/agents/command-code-light.svg" alt="Command Code" width="24" height="24" align="middle" /></picture> &nbsp; <b>Command Code</b></td>
-    <td valign="middle" nowrap><picture><source media="(prefers-color-scheme: dark)" srcset="frontend/src/renderer/assets/agents/openhands-dark.svg" /><img src="frontend/src/renderer/assets/agents/openhands-light.svg" alt="OpenHands" width="24" height="24" align="middle" /></picture> &nbsp; <b>OpenHands</b></td>
-  </tr>
-</table>
-
-<br />
-
-### Orchestrator for Mobile
-
-Control the agents running on your desktop from your phone. Install the app for [iPhone](https://apps.apple.com/app/ao-mobile/id6792552173) or [Android](https://play.google.com/store/apps/details?id=aoagents.dev). Scan the QR code in **Settings → Connect Mobile** to pair it with your desktop. It works on your home Wi-Fi and away from home.
-
-- **Get alerts.** A push notification tells you when an agent has a question or needs approval.
-- **Reply.** Answer in chat, approve the request, or open the agent's terminal.
-- **Start work.** Create a new worker and pick its agent and model.
-- **Review.** Check pull requests and reviewer results.
-
-<img src="docs/assets/readme/site/mobile.jpg" alt="The mobile app showing an agent asking which mail provider to use and the reply sent from the phone" width="100%" />
-
-### Cloud Agents
-
-Run workers in hosted workspaces instead of on your machine. Choose **Clone to the cloud** and pick a GitHub repository to start.
-
-- **Keep running.** Tasks keep going with your laptop closed.
-- **Follow along.** Open the chat, files, and terminal from the desktop app.
-- **Nothing on your machine.** The code, worktrees, and agents all live in the cloud.
-
-See the [Cloud guide](https://docs.orchestrator.inc/guides/cloud) for setup.
-
-## Install
-
-Download from [orchestrator.inc/download](https://orchestrator.inc/download/) or [GitHub Releases](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest). The app updates itself.
-
-| Platform | Download |
-| :-- | :-- |
-| **macOS** (Apple silicon) | [`agent-orchestrator-darwin-arm64.dmg`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-darwin-arm64.dmg) |
-| **macOS** (Intel) | [`agent-orchestrator-darwin-x64.dmg`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-darwin-x64.dmg) |
-| **Windows** | [`agent-orchestrator-win32-x64.exe`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-win32-x64.exe) |
-| **Linux** (AppImage) | [`agent-orchestrator-linux-x64.AppImage`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-linux-x64.AppImage) |
-| **Linux** (Debian/Ubuntu) | [`agent-orchestrator-linux-x64.deb`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-linux-x64.deb) |
-| **Linux** (Fedora/RHEL) | [`agent-orchestrator-linux-x64.rpm`](https://github.com/OrchestratorInc/agent-orchestrator/releases/latest/download/agent-orchestrator-linux-x64.rpm) |
-
-Open Orchestrator.inc and point it at the repository you want it to manage. The desktop app runs the daemon for you, so no CLI is required. See the [installation guide](https://docs.orchestrator.inc/installation) for agent CLI setup and troubleshooting.
-
-## Documentation
-
-| Document | Start here when you need |
-| :-- | :-- |
-| [Product documentation](https://docs.orchestrator.inc) | Installation, agent setup, and day-to-day product usage. |
-| [docs/documentation-map.md](docs/documentation-map.md) | Which docs are human-facing, which are machine-readable contracts, and which wins on drift. |
-| [docs/architecture.md](docs/architecture.md) | Backend mental model, lifecycle, persistence, CDC, status derivation, and daemon boundaries. |
-| [docs/backend-code-structure.md](docs/backend-code-structure.md) | Package ownership and where each backend concern belongs. |
-| [docs/cli/README.md](docs/cli/README.md) | CLI behavior and daemon route mapping. |
-| [docs/development.md](docs/development.md) | Prerequisites, build steps, running tests, and troubleshooting for local development. |
-| [docs/STATUS.md](docs/STATUS.md) | What currently ships on `main` and what remains in flight. |
-
-## Contributing
-
-Start with the [development guide](docs/development.md) for prerequisites, local setup, and test commands. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request, and use [GitHub Issues](https://github.com/OrchestratorInc/agent-orchestrator/issues) for bugs and feature requests.
-
-### Report a bug
-
-[Open a bug report](https://github.com/OrchestratorInc/agent-orchestrator/issues/new?template=bug_report.yml) from your own GitHub account. A few sentences on what you did and what went wrong are enough; version, OS, and repro steps help if you have them.
-
-A local coding agent can help gather evidence with the [bug-triage skill](.agents/skills/bug-triage/SKILL.md); keep its logs and notes in attachments, and review the draft before submitting it yourself. Please don't have a bot file issues for you.
-
-For help describing a problem, join the [bug-triaging channel on Discord](https://discord.com/channels/1476302178913357958/1491735678156013588). See [contribution guidance](CONTRIBUTING.md#bugs-and-features) for more detail.
-
-## Community
-
-Join [Discord](https://discord.com/invite/UZv7JjxbwG) for help and contributor discussion, follow [@useOrchestrator](https://x.com/useOrchestrator) for updates, or start a conversation in [GitHub Issues](https://github.com/OrchestratorInc/agent-orchestrator/issues).
-
-## Star history
-
-<a href="https://www.star-history.com/#OrchestratorInc/agent-orchestrator&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=OrchestratorInc/agent-orchestrator&type=Date&theme=dark" />
-    <img src="https://api.star-history.com/svg?repos=OrchestratorInc/agent-orchestrator&type=Date" alt="Star history chart for OrchestratorInc/agent-orchestrator" width="100%" />
-  </picture>
-</a>
-
-## Product telemetry
-
-Orchestrator.inc collects limited usage and reliability telemetry, never your code, prompts, agent conversations, or credentials. It includes an installation ID and your GitHub username; if you sign in to AO Cloud it also includes your AO Cloud user ID and the email address of that account, set once as a PostHog person property (never read from git config). Turn it all off in Settings > General > Privacy > Share usage analytics, which covers the desktop, the daemon, and a paired phone. [Learn exactly what we collect and how to opt out](docs/telemetry.md).
-
-## License
-
-Orchestrator.inc is available under the [Apache License 2.0](LICENSE).
+Modification notice: Praxis Swarm replaces the inherited README with the fork's
+handoff, offline-demo and supervised-CLI entrypoints. The original is retained in
+[the pinned upstream history](https://github.com/OrchestratorInc/agent-orchestrator/blob/71bb19f5947a64853ee6d11225bc896563878c50/README.md).

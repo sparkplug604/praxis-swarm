@@ -1,5 +1,11 @@
 # AGENTS.md
 
+Modified for Praxis Swarm: follow [swarm progress](docs/swarm/PROGRESS.md) for this
+fork's active work and [CONTRIBUTING.md](CONTRIBUTING.md) for its contribution process.
+This release is a source-built supervised CLI alpha; inherited desktop distribution
+instructions below describe upstream AO, not a published Praxis installer.
+Keep the exact-copy runtime qualification gate separate from the supervised profile.
+
 Operational guidance for coding agents working in this repository. Keep changes small, match the current rewrite architecture, and prefer the documented daemon/API boundaries over behavior from the old TypeScript implementation.
 
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) before choosing an issue or starting work.

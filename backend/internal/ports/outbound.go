@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package ports
 
 import (
@@ -550,6 +552,9 @@ type WorkspaceConfig struct {
 	// orchestrator worktree. Defaults to a truncation of ProjectID when empty.
 	SessionPrefix string
 	Branch        string
+	// PinnedSourceCommit requires a new branch at this exact full commit ID;
+	// no existing local/remote branch, workspace or default-ref fallback is allowed.
+	PinnedSourceCommit string
 	// FreshBranch never checks out a leftover local branch for a new
 	// speculative task; a collision gets a new suffixed branch instead.
 	FreshBranch bool

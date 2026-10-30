@@ -57,11 +57,13 @@ func Build() ([]byte, error) {
 	r.Spec.SetTitle("Agent Orchestrator HTTP daemon")
 	r.Spec.SetVersion("0.1.0-route-shell")
 	r.Spec.SetDescription("Loopback-only HTTP surface served by the Go daemon. " +
-		"Generated from Go (code-first) — do not edit by hand; run `go generate ./...`.")
+		"Generated from Go (code-first) — do not edit by hand; run `go generate ./...`. " +
+		"Modified for Praxis Swarm: supplied-plan supervised execution routes and contracts.")
 	r.Spec.Servers = []openapi31.Server{
 		*(&openapi31.Server{URL: "http://127.0.0.1:3001"}).WithDescription("Local daemon (loopback only)"),
 	}
 	r.Spec.Tags = []openapi31.Tag{
+		*(&openapi31.Tag{Name: "swarm"}).WithDescription("Supervised AO runs with supplied plans and durable reports"),
 		*(&openapi31.Tag{Name: "agents"}).WithDescription(
 			"Supported and locally runnable agent adapters"),
 		*(&openapi31.Tag{Name: "projects"}).WithDescription(
@@ -159,6 +161,12 @@ func schemaName(_ reflect.Type, defaultName string) string {
 // by projectOperations(). Add an entry when a new contract type is introduced;
 // the drift test fails until the spec is regenerated, which flags the gap.
 var schemaNames = map[string]string{ //nolint:gosec // Public OpenAPI type names include reset-credit contracts; no credential value is stored here.
+	"ControllersStartSupervisedSwarmRequest":               "StartSupervisedSwarmRequest",
+	"ControllersSupervisedSwarmContextInput":               "SupervisedSwarmContextInput",
+	"ControllersSupervisedSwarmRunIDParam":                 "SupervisedSwarmRunIDParam",
+	"ControllersSupervisedSwarmRunResponse":                "SupervisedSwarmRunResponse",
+	"ControllersSupervisedSwarmTaskResponse":               "SupervisedSwarmTaskResponse",
+	"ControllersSupervisedSwarmObservationResponse":        "SupervisedSwarmObservationResponse",
 	"ControllersTelemetryIdentityResponse":                 "TelemetryIdentityResponse",
 	"ControllersAgentAccountIDParam":                       "AgentAccountIDParam",
 	"ControllersAgentAccountLoginIDParam":                  "AgentAccountLoginIDParam",
@@ -754,6 +762,7 @@ func operations() []operation {
 	ops = append(ops, reviewOperations()...)
 	ops = append(ops, notificationOperations()...)
 	ops = append(ops, reportOperations()...)
+	ops = append(ops, supervisedSwarmOperations()...)
 	ops = append(ops, usageOperations()...)
 	ops = append(ops, pushOperations()...)
 	ops = append(ops, importOperations()...)
@@ -857,6 +866,15 @@ func identityOperations() []operation {
 				{http.StatusNotImplemented, envelope.APIError{}},
 			},
 		},
+	}
+}
+
+func supervisedSwarmOperations() []operation {
+	errors := []respUnit{{http.StatusBadRequest, envelope.APIError{}}, {http.StatusNotFound, envelope.APIError{}}, {http.StatusConflict, envelope.APIError{}}, {http.StatusRequestEntityTooLarge, envelope.APIError{}}, {http.StatusInternalServerError, envelope.APIError{}}, {http.StatusNotImplemented, envelope.APIError{}}}
+	return []operation{
+		{method: http.MethodPost, path: "/api/v1/swarm/runs", id: "startSupervisedSwarmRun", tag: "swarm", summary: "Start or replay a supervised AO swarm run", reqBody: controllers.StartSupervisedSwarmRequest{}, resps: append([]respUnit{{http.StatusAccepted, controllers.SupervisedSwarmRunResponse{}}}, errors...)},
+		{method: http.MethodGet, path: "/api/v1/swarm/runs/{runId}", id: "getSupervisedSwarmRun", tag: "swarm", summary: "Get a supervised swarm report", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, controllers.SupervisedSwarmRunResponse{}}}, errors...)},
+		{method: http.MethodPost, path: "/api/v1/swarm/runs/{runId}/stop", id: "stopSupervisedSwarmRun", tag: "swarm", summary: "Request supervised swarm stop and return observations", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, controllers.SupervisedSwarmRunResponse{}}}, errors...)},
 	}
 }
 

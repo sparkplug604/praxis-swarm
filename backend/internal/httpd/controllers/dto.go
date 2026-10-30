@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package controllers
 
 import (
@@ -22,6 +24,67 @@ import (
 
 	"github.com/aoagents/agent-orchestrator/backend/internal/mobilebridge"
 )
+
+// StartSupervisedSwarmRequest supplies immutable input for a daemon-owned run.
+type StartSupervisedSwarmRequest struct {
+	RequestID      string                        `json:"requestId"`
+	Plan           json.RawMessage               `json:"plan"`
+	Context        []SupervisedSwarmContextInput `json:"context"`
+	TimeoutSeconds int                           `json:"timeoutSeconds" minimum:"10" maximum:"600"`
+}
+type SupervisedSwarmContextInput struct {
+	ID   string `json:"id"`
+	Body string `json:"body"`
+}
+type SupervisedSwarmRunIDParam struct {
+	RunID string `path:"runId"`
+}
+type SupervisedSwarmRunResponse struct {
+	ID              string                        `json:"id"`
+	Profile         string                        `json:"profile"`
+	RequestID       string                        `json:"requestId"`
+	RequestHash     string                        `json:"requestHash"`
+	Plan            json.RawMessage               `json:"plan"`
+	Status          string                        `json:"status"`
+	CreatedAt       time.Time                     `json:"createdAt"`
+	DeadlineAt      time.Time                     `json:"deadlineAt"`
+	SourcePath      string                        `json:"sourcePath"`
+	SourceSnapshot  string                        `json:"sourceSnapshot"`
+	SourceUnchanged bool                          `json:"sourceUnchanged"`
+	Tasks           []SupervisedSwarmTaskResponse `json:"tasks"`
+	Errors          []string                      `json:"errors"`
+	Limits          []string                      `json:"limits"`
+}
+type SupervisedSwarmTaskResponse struct {
+	ID            string                             `json:"id"`
+	RequestID     string                             `json:"requestId"`
+	Branch        string                             `json:"branch"`
+	Packet        json.RawMessage                    `json:"packet"`
+	SessionID     string                             `json:"sessionId,omitempty"`
+	Status        string                             `json:"status"`
+	Observation   SupervisedSwarmObservationResponse `json:"observation"`
+	WorkspacePath string                             `json:"workspacePath,omitempty"`
+	SnapshotPath  string                             `json:"snapshotPath,omitempty"`
+	SnapshotHash  string                             `json:"snapshotHash,omitempty"`
+	CandidateHash string                             `json:"candidateHash,omitempty"`
+	DiffPath      string                             `json:"diffPath,omitempty"`
+	Error         string                             `json:"error,omitempty"`
+}
+type SupervisedSwarmObservationResponse struct {
+	Controller        string          `json:"controller"`
+	TurnState         string          `json:"turnState"`
+	StartedAt         *time.Time      `json:"startedAt,omitempty"`
+	CompletedAt       *time.Time      `json:"completedAt,omitempty"`
+	ProviderTurnID    string          `json:"providerTurnId,omitempty"`
+	Model             string          `json:"model,omitempty"`
+	Effort            string          `json:"effort,omitempty"`
+	ModelEvidence     string          `json:"modelEvidence,omitempty"`
+	PromptEvidence    string          `json:"promptEvidence,omitempty"`
+	Usage             json.RawMessage `json:"usage,omitempty"`
+	PromptBytes       int             `json:"promptBytes,omitempty"`
+	SystemPromptBytes int             `json:"systemPromptBytes,omitempty"`
+	ObservedAt        time.Time       `json:"observedAt"`
+}
 
 // CreateReportRequest is the local caller-to-daemon report submission contract.
 // SessionID attributes the report; like the rest of AO's unauthenticated

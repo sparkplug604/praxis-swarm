@@ -1,8 +1,9 @@
+# Modified for Praxis Swarm: replace inherited community links with this fork's documentation.
 blank_issues_enabled: true
 contact_links:
-  - name: Discord community
-    url: https://discord.com/invite/UZv7JjxbwG
-    about: Questions, mentoring, and the weekly contributor call.
+  - name: Praxis Swarm quick start
+    url: https://github.com/sparkplug604/praxis-swarm/blob/main/README.md
+    about: Offline demo, supervised CLI, expected outcomes and current limits.
   - name: Contributing guide
-    url: https://github.com/OrchestratorInc/agent-orchestrator/blob/main/CONTRIBUTING.md
-    about: How to claim issues, open PRs, and work with maintainers.
+    url: https://github.com/sparkplug604/praxis-swarm/blob/main/CONTRIBUTING.md
+    about: Propose a focused change and report the checks you actually ran.

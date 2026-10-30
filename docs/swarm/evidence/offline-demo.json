@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-29T20:27:53.825053+00:00",
+  "status": "passed",
+  "evidence_mode": "test",
+  "go_exit_code": 0,
+  "package": "github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/scheduler",
+  "package_elapsed_seconds": 8.038,
+  "required_tests": [
+    {
+      "name": "TestExactRuntimeComposesQualifiesAndPersistsParallelLaunches",
+      "status": "passed",
+      "events": {
+        "run": 1,
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "scope": "Parallel fake runtime launches; real planning, qualification and SQLite code; no model processes."
+    },
+    {
+      "name": "TestSchedulerOverlappingProcessesIndependentCopiesAndDependency",
+      "status": "passed",
+      "events": {
+        "run": 1,
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "scope": "Two controlled local helper subprocesses overlap in independent copies; dependency gating and source preservation."
+    },
+    {
+      "name": "TestSchedulerCancelSQLiteRetainsUnknownThenReconcilesExactAbsence",
+      "status": "passed",
+      "events": {
+        "run": 1,
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "scope": "Fake stop/probe with SQLite: uncertainty retains the running attempt; exact absence later permits cancellation."
+    },
+    {
+      "name": "TestExactCancelAcknowledgementRequiresIndependentObservation",
+      "status": "passed",
+      "events": {
+        "run": 1,
+        "pass": 1,
+        "skip": 0,
+        "fail": 0
+      },
+      "scope": "Fake stop/probe matrix: PTY acknowledgement, unknown liveness, mismatched replies and errors."
+    }
+  ],
+  "failures": [],
+  "limits": [
+    "No model sessions or provider calls are exercised; model overlap is not demonstrated.",
+    "Helper subprocess overlap is separate from fake runtime/configuration checks.",
+    "This demo does not qualify live dispatch, OS sandboxing or descendant containment.",
+    "Go may download its toolchain or module dependencies before testing if they are not cached."
+  ],
+  "provenance": {
+    "kind": "sanitized derivative of one local test run",
+    "raw_evidence": "Retained outside the repository; not distributed.",
+    "platform": "Apple Silicon macOS",
+    "go_version": "go version go1.27.1 darwin/arm64",
+    "go_dependency_network": "disabled; existing local caches used",
+    "source_hash_scope": "Demo scripts and the three files defining selected tests; not a complete repository fingerprint."
+  },
+  "selected_source_sha256": {
+    "scripts/swarm/demo-offline.sh": "9fd4d268e830f8fcc5dbd1de230fb2985327e4ec9e8503d5053b15afbe61ca4b",
+    "scripts/swarm/summarize-demo.py": "a106deace2a0c262e4ff889921535c9aa204c5f1301e76a451780b52a7e36ce6",
+    "scripts/swarm/test_summarize_demo.py": "f22f86b06de1464e9908f091df5b95f5f48aefce9527500fbf9d3bc06c539db1",
+    "backend/internal/service/swarm/scheduler/exact_test.go": "1aff81627639a104f734a794dce7c9469427d3f20aeb423758cbadb804ed880f",
+    "backend/internal/service/swarm/scheduler/cancel_test.go": "75263ee5ef33e12165f5dc893401583fc4e6a5ccc6d56b2f53c7215f42f82024",
+    "backend/internal/service/swarm/scheduler/service_test.go": "873f69690842944f0459ed4a01fd3eef62120e3d24001291a64c6b7d1c518ff0"
+  }
+}

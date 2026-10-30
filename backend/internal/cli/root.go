@@ -1,5 +1,7 @@
 // Package cli implements the user-facing ao command. It stays thin: commands
 // discover the local daemon, call its loopback HTTP API, and format output.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package cli
 
 import (
@@ -226,6 +228,7 @@ func NewRootCommand(deps Deps) *cobra.Command {
 	root.AddCommand(newSpawnCommand(ctx))
 	root.AddCommand(newSendCommand(ctx))
 	root.AddCommand(newReportCommand(ctx))
+	root.AddCommand(newSwarmCommand(ctx))
 	root.AddCommand(newPreviewCommand(ctx))
 	root.AddCommand(newRenderCommand(ctx))
 	root.AddCommand(newMCPCommand(ctx))

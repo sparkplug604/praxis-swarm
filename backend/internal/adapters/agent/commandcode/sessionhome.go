@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package commandcode
 
 import (
@@ -460,11 +462,18 @@ func (r *gitConfigRewriter) relocate(source, dest string) error {
 	if err != nil {
 		return err
 	}
-	return writePrivateFile(dest, []byte(r.rewrite(string(contents), filepath.Dir(source))))
+	sourceDir := filepath.Dir(source)
+	conditionDir := sourceDir
+	if resolved, err := filepath.EvalSymlinks(source); err == nil {
+		// Git anchors gitdir:./ to the physical config file's directory.
+		// Ordinary relative includes still use the logical source filename.
+		conditionDir = filepath.Dir(resolved)
+	}
+	return writePrivateFile(dest, []byte(r.rewrite(string(contents), sourceDir, conditionDir)))
 }
 
 // rewrite changes include paths and gitdir conditions while retaining other raw lines.
-func (r *gitConfigRewriter) rewrite(contents, sourceDir string) string {
+func (r *gitConfigRewriter) rewrite(contents, sourceDir, conditionDir string) string {
 	var out strings.Builder
 	section := ""
 	for _, line := range splitGitConfigLines(contents) {
@@ -472,7 +481,7 @@ func (r *gitConfigRewriter) rewrite(contents, sourceDir string) string {
 		if header {
 			section = name
 			if name == "includeif" {
-				if condition, ok := r.anchorCondition(subsection, sourceDir); ok {
+				if condition, ok := r.anchorCondition(subsection, conditionDir); ok {
 					out.WriteString("[includeIf " + gitConfigString(condition) + "]\n")
 					continue
 				}
@@ -531,17 +540,17 @@ func anchorConfigPattern(pattern, sourceDir, realHome string) (string, bool) {
 		// already mean the same thing from any location.
 		return "", false
 	}
-	anchored := filepath.ToSlash(base)
+	if resolved, err := filepath.EvalSymlinks(base); err == nil {
+		base = resolved
+	}
+	anchored := strings.TrimRight(filepath.ToSlash(base), "/") + "/"
 	if rest == "" {
 		// A directory pattern only matches with its trailing separator.
-		return anchored + "/", true
+		return anchored, true
 	}
-	joined := filepath.ToSlash(filepath.Join(base, filepath.FromSlash(rest)))
-	if strings.HasSuffix(rest, "/") && !strings.HasSuffix(joined, "/") {
-		// Keep a trailing separator: git matches it literally.
-		joined += "/"
-	}
-	return joined, true
+	// Resolve only the concrete base. Cleaning the suffix can alter a glob,
+	// for example by collapsing a wildcard component followed by /../.
+	return anchored + rest, true
 }
 
 // gitIncludeTargets resolves every include target in contents.

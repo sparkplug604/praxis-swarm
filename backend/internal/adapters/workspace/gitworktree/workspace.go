@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package gitworktree
 
 import (
@@ -281,6 +283,9 @@ func (w *Workspace) Create(ctx context.Context, cfg ports.WorkspaceConfig) (port
 	repo, err := w.repoPath(cfg.ProjectID)
 	if err != nil {
 		return ports.WorkspaceInfo{}, err
+	}
+	if cfg.PinnedSourceCommit != "" {
+		return w.createPinnedWorktree(ctx, repo, cfg)
 	}
 	if err := w.enableWorktreeConfig(ctx, repo); err != nil {
 		return ports.WorkspaceInfo{}, err

@@ -1,0 +1,238 @@
+{
+  "profile": "supervised-ao-v1",
+  "run_id": "sao-1ed0e5e98273db0433e09255",
+  "status": "stopped",
+  "source_commit": "85b29931a1ce57a1383ec703df67b73821000339",
+  "source_unchanged_reported": true,
+  "workers": [
+    {
+      "task_id": "formatter",
+      "session_id": "ghl03-demo-1",
+      "status": "completed",
+      "turn_state": "completed",
+      "requested": {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "effort": "low"
+      },
+      "configured_model": "gpt-5.6-luna",
+      "configured_effort": "low",
+      "model_evidence": "conversation_settings_not_independent_model_telemetry",
+      "provider_turn_id": "codex:41:3f7ba6c6-2284-4d05-9941-bc684c72da72:root01a1897c-6584-7de3-8d6c-5dc9478db4e8",
+      "started_at": "2026-10-29T21:06:33.486071Z",
+      "completed_at": "2026-10-29T21:06:52.894816Z",
+      "prompt_bytes": 7689,
+      "system_prompt_bytes": 15821,
+      "prompt_evidence": "spawn_response_byte_counts",
+      "packet_bytes": 8739,
+      "candidate_hash": "b58e538fc78feec755f6a47b7a85a66905a7af2d8f227a286e62651e3611c280",
+      "snapshot_hash": "062332a54ba9439f71b6ad64fbbbe48fe85b5f148c13ad7a1d850390b6781646",
+      "independent_controller": "stopped",
+      "usage": {
+        "contextUsed": 29471,
+        "contextWindow": 258400,
+        "inputTokens": 221164,
+        "outputTokens": 1852,
+        "cachedTokens": 196992,
+        "totalTokens": 223016
+      },
+      "changed_file": "duration_formatter.py",
+      "file_sha256": "b9f376f9a2fe005145933b7c3ffc3290113dc899eb7e256adbf9ac7e6ca042e4"
+    },
+    {
+      "task_id": "parser",
+      "session_id": "ghl03-demo-2",
+      "status": "stopped",
+      "turn_state": "failed",
+      "requested": {
+        "harness": "codex",
+        "model": "gpt-5.6-luna",
+        "effort": "low"
+      },
+      "configured_model": "gpt-5.6-luna",
+      "configured_effort": "low",
+      "model_evidence": "conversation_settings_not_independent_model_telemetry",
+      "provider_turn_id": "codex:41:f18d90c9-c132-404d-ad97-951ab9b45a61:root01a1897c-63db-79f2-ba91-19c9399f0944",
+      "started_at": "2026-10-29T21:06:33.057487Z",
+      "completed_at": "2026-10-29T21:10:32.086011Z",
+      "prompt_bytes": 7604,
+      "system_prompt_bytes": 15821,
+      "prompt_evidence": "spawn_response_byte_counts",
+      "packet_bytes": 8651,
+      "candidate_hash": "9a20cf083d19bedfaaad53eed0c9c72b7942664a18eee8e7981b3f6821fff5c5",
+      "snapshot_hash": "02ba6537033106b2cac318580cf84b7b460fbb9f87b7c5b94a26ef1b2a7dacbf",
+      "independent_controller": "stopped",
+      "usage": {
+        "contextUsed": 30040,
+        "contextWindow": 258400,
+        "inputTokens": 138290,
+        "outputTokens": 1488,
+        "cachedTokens": 107776,
+        "totalTokens": 139778
+      },
+      "changed_file": "duration_parser.py",
+      "file_sha256": "4f4df802341bd9ae8b5cc14f3e3a65a158f276558b3536085196970bfcaa34a6"
+    }
+  ],
+  "turn_overlap_seconds": 19.408745,
+  "both_turns_completed": false,
+  "all_tests_passed": true,
+  "worker_usage_total": {
+    "inputTokens": 359454,
+    "outputTokens": 3340,
+    "cachedTokens": 304768,
+    "totalTokens": 362794
+  },
+  "usage_scope": "Provider-reported worker conversation totals only; cached input included in input. Coordinator usage, billing and comparative savings not established.",
+  "automatic_integration": false,
+  "runtime_qualification": "open",
+  "recorded_at": "2026-10-29",
+  "qualification": "partial_live_diagnostic_not_confirmation",
+  "tested_ao_binary_sha256": "fb449c34aeeef01b6e87fc3791535e22b829c733fbbc5c48a3985ba5d4614246",
+  "maximum_workers": 2,
+  "automatic_retries": false,
+  "model_substitution": false,
+  "independent_native_telemetry": {
+    "formatter": {
+      "source": "allowlisted native transcript fields; raw text excluded",
+      "session": {
+        "id": "01a1897c-64d9-7a00-8df2-c1f6bb019d12",
+        "originator": "agent-orchestrator",
+        "cli_version": "0.153.4",
+        "model_provider": "openai"
+      },
+      "turn_contexts": [
+        {
+          "turn_id": "01a1897c-6584-7de3-8d6c-5dc9478db4e8",
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox_policy": {
+            "type": "workspace-write",
+            "network_access": false
+          },
+          "workspace_matches": true
+        }
+      ],
+      "task_events": [
+        {
+          "timestamp": "2026-10-29T21:06:33.532Z",
+          "type": "task_started",
+          "turn_id": "01a1897c-6584-7de3-8d6c-5dc9478db4e8"
+        },
+        {
+          "timestamp": "2026-10-29T21:06:52.892Z",
+          "type": "task_complete",
+          "turn_id": "01a1897c-6584-7de3-8d6c-5dc9478db4e8"
+        }
+      ],
+      "native_developer_message_characters": [
+        47130
+      ],
+      "native_base_instruction_characters": 17730,
+      "final_usage": {
+        "total_token_usage": {
+          "input_tokens": 221164,
+          "cached_input_tokens": 196992,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1852,
+          "reasoning_output_tokens": 153,
+          "total_tokens": 223016
+        },
+        "last_token_usage": {
+          "input_tokens": 29367,
+          "cached_input_tokens": 28928,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 104,
+          "reasoning_output_tokens": 0,
+          "total_tokens": 29471
+        },
+        "model_context_window": 258400
+      },
+      "status": "observed"
+    },
+    "parser": {
+      "source": "allowlisted native transcript fields; raw text excluded",
+      "session": {
+        "id": "01a1897c-6334-7e42-9851-e65928d221f7",
+        "originator": "agent-orchestrator",
+        "cli_version": "0.153.4",
+        "model_provider": "openai"
+      },
+      "turn_contexts": [
+        {
+          "turn_id": "01a1897c-63db-79f2-ba91-19c9399f0944",
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox_policy": {
+            "type": "workspace-write",
+            "network_access": false
+          },
+          "workspace_matches": true
+        }
+      ],
+      "task_events": [
+        {
+          "timestamp": "2026-10-29T21:06:33.087Z",
+          "type": "task_started",
+          "turn_id": "01a1897c-63db-79f2-ba91-19c9399f0944"
+        }
+      ],
+      "native_developer_message_characters": [
+        47130
+      ],
+      "native_base_instruction_characters": 17730,
+      "final_usage": {
+        "total_token_usage": {
+          "input_tokens": 168939,
+          "cached_input_tokens": 137344,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1782,
+          "reasoning_output_tokens": 316,
+          "total_tokens": 170721
+        },
+        "last_token_usage": {
+          "input_tokens": 30649,
+          "cached_input_tokens": 29568,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 294,
+          "reasoning_output_tokens": 72,
+          "total_tokens": 30943
+        },
+        "model_context_window": 258400
+      },
+      "status": "observed"
+    }
+  },
+  "tests": [
+    {
+      "runtime": "Python 3.9.6",
+      "exit_code": 0,
+      "test_methods": 13
+    },
+    {
+      "runtime": "Python 3.14.3",
+      "exit_code": 0,
+      "test_methods": 13
+    }
+  ],
+  "shutdown": {
+    "exit_code": 0,
+    "health_reachable": false,
+    "run_file_present": false
+  },
+  "blocker": {
+    "task": "parser",
+    "reason": "Inherited AO instructions required a local completion report. Its loopback call requested sandbox escalation and remained awaiting approval until the daemon deadline.",
+    "deadline_seconds": 240,
+    "approval_bypassed": false
+  },
+  "correction": {
+    "state": "implementation_and_regression_validation_only",
+    "change": "Fresh supervised starts use a compact task-specific prompt and native final result instead of requiring AO reporting commands. Project rules and permission boundaries are retained.",
+    "fresh_live_confirmation": "not_run"
+  }
+}

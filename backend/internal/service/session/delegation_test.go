@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package session
 
 import (
@@ -120,6 +122,48 @@ func TestDelegateTaskNamesGitWorkspaceDuringSpawn(t *testing.T) {
 	}
 	if !cmd.spawnedCfg.NameFromPrompt || len(cmd.backgroundCalls) != 0 {
 		t.Fatal("Git task must use one provisioning-time naming call")
+	}
+}
+
+func TestDelegateTaskDisablesCosmeticModelCallsPerRequest(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		kind domain.ProjectKind
+	}{
+		{name: "Git"},
+		{name: "Scratch", kind: domain.ProjectKindScratch},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := newFakeStore()
+			st.projects["ao"] = domain.ProjectRecord{ID: "ao", Kind: tc.kind}
+			cmd := &fakeCommander{backgroundResult: "Generated title"}
+			cmd.spawnFunc = func(cfg ports.SpawnConfig) domain.SessionRecord {
+				rec := domain.SessionRecord{ID: "mer-9", ProjectID: cfg.ProjectID, Kind: cfg.Kind, DisplayName: cfg.DisplayName}
+				st.sessions[rec.ID] = rec
+				return rec
+			}
+			backgroundScheduled := false
+			svc := &Service{store: st, manager: cmd, runBackground: func(work func()) {
+				backgroundScheduled = true
+				work()
+			}}
+			brief := "  Fix login redirect\nwithout changing the API.  "
+			out, err := svc.DelegateTask(context.Background(), DelegateTaskInput{
+				ProjectID: "ao", Brief: brief, DisableCosmeticModelCalls: true,
+			})
+			if err != nil {
+				t.Fatalf("DelegateTask: %v", err)
+			}
+			if out.WorkerID != "mer-9" || cmd.spawnCalls != 1 || cmd.spawnedCfg.Prompt != brief {
+				t.Fatalf("worker spawn changed: out=%#v calls=%d cfg=%#v", out, cmd.spawnCalls, cmd.spawnedCfg)
+			}
+			if !cmd.spawnedCfg.DisableCosmeticModelCalls || cmd.spawnedCfg.NameFromPrompt || backgroundScheduled || len(cmd.backgroundCalls) != 0 {
+				t.Fatalf("cosmetic naming ran: fromPrompt=%t scheduled=%t calls=%#v", cmd.spawnedCfg.NameFromPrompt, backgroundScheduled, cmd.backgroundCalls)
+			}
+			if got := st.sessions[out.WorkerID].DisplayName; got != "Fix login redirect without changing the API." {
+				t.Fatalf("display name = %q, want deterministic task title", got)
+			}
+		})
 	}
 }
 
@@ -366,6 +410,8 @@ func TestSpawnNamesImplicitWorkerBranchesFromEveryEntryPoint(t *testing.T) {
 		{name: "orchestrator Chat worker", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, ParentSessionID: "ao-orch", RequestedMode: domain.SessionModeChat, DisplayName: "Review: login", Prompt: "Review login redirect"}, wantName: true, wantKeepTitle: true},
 		{name: "orchestrator TUI worker", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, ParentSessionID: "ao-orch", RequestedMode: domain.SessionModeTUI, Prompt: "Review login redirect"}, wantName: true},
 		{name: "workspace project", kind: domain.ProjectKindWorkspace, cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, Prompt: "Fix login redirect"}, wantName: true},
+		{name: "cosmetic calls disabled", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, Prompt: "Fix login redirect", DisableCosmeticModelCalls: true}},
+		{name: "cosmetic calls disabled despite naming request", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, Prompt: "Fix login redirect", NameFromPrompt: true, DisableCosmeticModelCalls: true}},
 		{name: "explicit branch", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, Branch: "review/login", Prompt: "Review login"}},
 		{name: "no prompt", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindWorker, Prompt: " \n "}},
 		{name: "orchestrator", cfg: ports.SpawnConfig{ProjectID: "ao", Kind: domain.KindOrchestrator, Prompt: "Coordinate reviews"}},

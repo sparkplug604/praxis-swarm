@@ -1,4 +1,5 @@
 name: PR Review Leaderboard
+# Modified by Praxis Swarm: inherited bot comments remain upstream-only.
 
 on:
   # pull_request_target lets the workflow comment on PRs from forks. This job
@@ -12,6 +13,7 @@ permissions:
 
 jobs:
   leaderboard:
+    if: github.repository == 'OrchestratorInc/agent-orchestrator'
     name: Post trailing 7-day review stats
     runs-on: ubuntu-latest
     steps:

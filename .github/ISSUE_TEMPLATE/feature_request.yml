@@ -1,45 +1,40 @@
+# Modified for Praxis Swarm: discuss this fork's scope without inherited core-team approval promises.
 name: Feature request
-description: Propose a new capability or improvement.
+description: Propose an improvement to Praxis Swarm.
 title: "[Feature]: "
-labels: ["enhancement", "needs-discussion"]
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Lead with the **problem**, not only the solution.
-        If you want to work on this, comment "Can I work on this?" and wait for core-team approval on the issue.
-
+        Describe the user's problem and a concrete outcome. For larger changes, discuss scope here before building. Review timing and acceptance are not guaranteed.
   - type: textarea
     id: problem
     attributes:
       label: Problem
-      description: What pain are you hitting? Who does this affect?
-      placeholder: As a … I need … because …
+      description: What are you trying to do, and where does the current workflow fall short?
     validations:
       required: true
-
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed direction
-      description: Rough idea of what good looks like. Design sketches welcome; keep it optional.
+      label: Proposed outcome
+      description: What should a user be able to do? Distinguish a proposal from behavior already verified.
     validations:
       required: false
-
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: Workarounds or other approaches you already tried.
+      label: Alternatives and evidence
+      description: Workarounds, relevant examples, or checks that would demonstrate the improvement.
     validations:
       required: false
-
   - type: checkboxes
     id: checks
     attributes:
-      label: Before submitting
+      label: Coordination
       options:
-        - label: I searched existing issues / discussions for something similar
-          required: true
-        - label: I am willing to help implement this if maintainers agree on scope
+        - label: I checked existing issues and pull requests for related work.
+          required: false
+        - label: I would like to help implement or validate this change.
           required: false

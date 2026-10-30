@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package httpd
 
 import (
@@ -20,10 +22,12 @@ import (
 	prsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/pr"
 	projectsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/project"
 	reviewsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/review"
+	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/supervised"
 )
 
 // APIDeps bundles every service the API layer's controllers depend on.
 type APIDeps struct {
+	SupervisedSwarm    supervised.Manager
 	Awake              controllers.AwakeService
 	Agents             controllers.AgentCatalog
 	CodexAccounts      controllers.CodexAccountService
@@ -127,6 +131,8 @@ func normalizeAPIDeps(deps APIDeps, log *slog.Logger) APIDeps {
 // API owns one controller per resource and is the single Register call the
 // router invokes to mount the /api/v1 surface.
 type API struct {
+	supervisedSwarm *controllers.SupervisedSwarmController
+
 	cfg           config.Config
 	deps          APIDeps
 	agents        *controllers.AgentsController
@@ -173,8 +179,9 @@ func NewAPI(cfg config.Config, deps APIDeps) *API {
 // errors, so their logs use the same configured handler as the rest of HTTP.
 func newAPIWithLogger(cfg config.Config, deps APIDeps, log *slog.Logger) *API {
 	return &API{
-		cfg:  cfg,
-		deps: deps,
+		supervisedSwarm: &controllers.SupervisedSwarmController{Svc: deps.SupervisedSwarm},
+		cfg:             cfg,
+		deps:            deps,
 		agents: &controllers.AgentsController{
 			Catalog: deps.Agents,
 		},
@@ -328,6 +335,7 @@ func (a *API) Register(root chi.Router) {
 			a.reviews.Register(r)
 			a.notifications.Register(r)
 			a.reports.Register(r)
+			a.supervisedSwarm.Register(r)
 			a.push.Register(r)
 			a.imports.Register(r)
 			a.fs.Register(r)

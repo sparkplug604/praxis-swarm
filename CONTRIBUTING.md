@@ -1,86 +1,97 @@
-# Contributing
+# Contributing to Praxis Swarm
 
-Regular contributions can lead to a conversation about joining the team.
+Praxis Swarm is an independent fork of Agent Orchestrator. Contributions here
+improve this fork's supplied-plan workflow, handoff contracts, evidence, examples
+and documentation. The process below applies to this fork; upstream contributions
+follow upstream's own contributor guide.
 
-New contributors should start with bug fixes. Pick an available issue labelled
-`bug`, comment to claim it, and open a PR linked to that issue.
-Feature work needs core-team approval before you start.
+Start with a small, reproducible bug, an unclear setup step, or a missing boundary
+case. Search [this fork's issues](https://github.com/sparkplug604/praxis-swarm/issues)
+and linked pull requests before duplicating work. Small fixes and documentation
+improvements can be proposed directly. For a larger feature or changed runtime
+contract, open an issue describing the problem and proposed scope before investing
+in an implementation. Review and response times are not guaranteed.
 
-Bug reports, docs, tests, and help investigating issues are welcome too.
+## Make one useful change
 
-[![Discord](https://img.shields.io/badge/Discord-join%20the%20community-5865F2?style=for-the-badge&logo=discord&logoColor=white&logoSize=auto)](https://discord.com/invite/UZv7JjxbwG)
+1. Read [README.md](README.md) for the current product boundary and
+   [PROGRESS.md](docs/swarm/PROGRESS.md) for verified status.
+2. Follow [AGENTS.md](AGENTS.md) for architecture, generated files and validation.
+   This guide describes contributions to Praxis Swarm; inherited upstream release
+   and distribution notes do not mean this fork ships those products.
+3. Branch from the fork's `main`, keep the change focused, and preserve unrelated
+   work. For an existing issue, leave a brief note about your intended change so
+   others can coordinate.
+4. Run checks relevant to the change and record their actual results. Distinguish
+   passed, failed, skipped and not-run checks; include any environment limitation.
+5. Open a pull request to [Praxis Swarm](https://github.com/sparkplug604/praxis-swarm/pulls)
+   using the supplied template. Explain the concrete behavior before and after,
+   link an issue when applicable, and update docs for changed user workflows.
 
-Use Discord for questions and the weekly contributor call.
+| Work | Start here | Relevant verification |
+| --- | --- | --- |
+| First-run docs or example | `README.md`, `docs/swarm/`, `scripts/swarm/` | Check paths, commands and expected outcomes against source; label commands you did not run |
+| Planning, handoffs or supervised lifecycle | `backend/internal/service/swarm/` | Focused Go tests, with fakes for provider behavior and race checks for concurrency |
+| CLI or HTTP behavior | `backend/internal/cli/`, `backend/internal/httpd/` | Request/error tests and API route/schema checks |
+| Broader AO behavior | [architecture](docs/architecture.md), [development guide](docs/development.md) | The relevant inherited package and platform checks |
 
-## Ways to contribute
+## Set up and verify
 
-| Type             | Examples                                       |
-| ---------------- | ---------------------------------------------- |
-| Code             | Bug fixes; feature work after core-team approval |
-| Docs             | README, `docs/`, architecture notes            |
-| Triage           | Repro bugs, tighten reports, label suggestions |
-| Examples / tests | Recipes, edge cases, flaky-test hunts          |
+The smallest entrypoint uses Bash, Git, Python 3 and Go 1.27.1:
 
-## Quick start
-
-1. Read [AGENTS.md](AGENTS.md) for setup, commands, and PR requirements.
-2. Pick an unclaimed `bug` from [open issues](https://github.com/OrchestratorInc/agent-orchestrator/issues). Check assignees, comments, and linked PRs first.
-3. Comment `I'd like to work on this` before starting.
-4. Open a PR with `Fixes #123` and describe how you checked the change.
-5. Address review feedback. Maintainers review and merge when the required checks pass.
-
-If an issue is waiting for a core-team decision, ask before starting work.
-
-Need the product/run overview first? Start with [README.md](README.md),
-[docs/architecture.md](docs/architecture.md), and
-[docs/development.md](docs/development.md).
-
-Two onboarding notes matter on current `main`:
-
-- On fresh Linux setups, prefer `cd frontend && npm run package` unless you have also installed distro packaging tools such as `rpm`/`rpmbuild` for `npm run make`.
-- Mobile companion app docs are still being filled in. Do not assume `packages/mobile/README.md` is a complete headless setup guide on this branch.
-
-### Bugs and features
-
-Use the [GitHub issue forms](https://github.com/OrchestratorInc/agent-orchestrator/issues/new/choose) for bugs and feature requests.
-
-Before working on a feature, comment `Can I work on this?` on its issue and
-wait for core-team approval there. Feature PRs wait for approval before review.
-A maintainer removes `needs-discussion` after approving the feature.
-
-If an issue is misclassified, share its link on
-[Discord](https://discord.com/invite/UZv7JjxbwG).
-
-For bugs, only a description is required. Write a short, concrete report in your own words: what you did and what went wrong. When available, add what you expected, steps to reproduce, how often it happens, AO version and OS, or screenshots/a recording. You can report an intermittent bug even if you cannot reproduce it reliably.
-
-Search existing issues when possible; add your observations to a matching issue. Submit from your own GitHub account so maintainers can follow up with the person who experienced the problem. Please don't ask AO Bot to file reports on your behalf.
-
-Agent assistance is welcome. We recommend asking your local coding agent to use the [bug-triage skill](.agents/skills/bug-triage/SKILL.md) to ask useful follow-up questions and gather supporting evidence. The issue body should contain only observations you supplied, without invented steps, impact, or root-cause claims. Keep agent-collected logs, relevant database excerpts, and analysis in separate, clearly labeled attachments; remove secrets and unrelated personal data before sharing. Evidence and screenshots are optional, and can be added later.
-
-For example, ask your local agent:
-
-```text
-Use .agents/skills/bug-triage/SKILL.md to help with this bug: <what I observed>.
-Ask about missing details that would help, draft a concise report using only
-what I tell you, and collect relevant evidence separately for me to attach.
+```bash
+bash scripts/swarm/demo-offline.sh
 ```
 
-Review the draft and attachments before submitting. A clear observation is useful on its own; no diagnosis or proposed fix is needed.
+It launches no models and writes a report outside the checkout. See the
+[offline quick start](docs/swarm/QUICKSTART.md) for dependency-download behavior,
+expected results and failure logs. Node, Electron and a model account are not
+required for this demo. The inherited frontend and desktop require their own
+[development setup](docs/development.md); use checkout-local dependencies.
 
-### Pull requests
+For a supervised-service change, a focused starting check is:
 
-New PRs are prefilled from [`.github/pull_request_template.md`](.github/pull_request_template.md).
-Also follow **PR hygiene** in [AGENTS.md](AGENTS.md): branch from `main`, one issue per PR, conventional commits, explain intentional omissions, and keep CI green for the area you touched.
+```bash
+GOMAXPROCS=2 go -C backend test -race -p 1 ./internal/service/swarm/supervised
+```
 
-The AO Cloud control plane (the hosted service behind Cloud Agents) is not in this repository and does not take outside contributions. Changes to the desktop's cloud features, the CLI, and the cloud contract in `contracts/cloud/` are welcome here.
+Choose checks for the code you changed; this example is not a substitute for the
+full applicable CI requirements in AGENTS.md. Keep known baseline failures
+separate from new regressions. For API changes, edit the Go DTOs and operation
+registry, run `npm run api`, and include both generated OpenAPI and TypeScript
+schemas. Do not hand-edit generated storage or API files.
 
-### Weekly contributor call
+Use disposable projects, worktrees and AO data for diagnostics. Do not use tests
+to launch a model, change account configuration or consume paid usage without
+explicit authorization. A live trial must declare its model, scope, account-use
+boundary and evidence plan; provider calls are not a routine CI prerequisite.
+Preserve uncertain launch/stop records and user work. Do not turn a failed probe
+into proof that a process stopped, or use cleanup to conceal a failed run.
 
-The weekly contributor call is open to everyone. Share your work, discuss PRs,
-and suggest features. The time and link are shared on Discord.
+## Reports and proposals
 
-## Code of Conduct
+Use [this fork's issue forms](https://github.com/sparkplug604/praxis-swarm/issues/new/choose).
+A useful bug report says what you did and what happened. When available, include
+the checkout commit, OS, command, expected result and whether the run used test
+doubles or real models. A diagnosis is optional. Describe intermittent failures
+even when you cannot reproduce them reliably.
 
-Be respectful, constructive, and assume good intent. Report problems to maintainers via Discord DM.
+Share small, relevant evidence excerpts. Remove credentials, personal paths and
+unrelated task content before posting logs. Keep observed facts separate from an
+agent's interpretation. Agent-assisted contributions are welcome, but review the
+diff and evidence yourself; generated claims are not verification.
 
-Thanks for making agent-orchestrator better for the next person who shows up.
+Feature requests should describe the user's problem and a concrete outcome.
+Do not present planned functionality, a helper-process test, or one successful
+model run as a broadly qualified capability. Acceptance, production integration,
+spending limits and containment need their own evidence.
+
+Be respectful and specific in issues and reviews. This fork currently coordinates
+through GitHub issues and pull requests; no separate community or support service
+is promised. Upstream-specific contributions should follow the
+[upstream contributor process](https://github.com/OrchestratorInc/agent-orchestrator/blob/71bb19f5947a64853ee6d11225bc896563878c50/CONTRIBUTING.md).
+
+Modification notice: adapted from Agent Orchestrator's contributor guide for
+Praxis Swarm. Upstream recruiting, community, approval and hosted-service
+commitments were replaced with this fork's scope and contribution process.
+Original attribution and history are retained; see [UPSTREAM.md](docs/swarm/UPSTREAM.md).

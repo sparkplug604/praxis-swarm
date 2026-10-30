@@ -1,5 +1,7 @@
 // Package sessionmanager drives internal session command operations over runtime,
 // agent, workspace, storage, messenger, and lifecycle dependencies.
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package sessionmanager
 
 import (
@@ -986,6 +988,9 @@ func New(d Deps) *Manager {
 // materialization fails the still-seed row is deleted outright; a later failure
 // parks the row as terminated and rolls back what was built.
 func (m *Manager) Spawn(ctx context.Context, cfg ports.SpawnConfig) (domain.SessionRecord, int, int, error) {
+	if err := validateSupervisedAssignment(cfg); err != nil {
+		return domain.SessionRecord{}, 0, 0, err
+	}
 	if cfg.RequestedOutput == domain.RequestedOutputArtifact && m.artifactDir("") == "" {
 		return domain.SessionRecord{}, 0, 0, fmt.Errorf("spawn: %w", ErrArtifactOutputUnavailable)
 	}
@@ -1009,6 +1014,9 @@ func (m *Manager) Spawn(ctx context.Context, cfg ports.SpawnConfig) (domain.Sess
 	projectKind := project.Kind.WithDefault()
 	if standalone {
 		projectKind = domain.ProjectKindScratch
+	}
+	if cfg.PinnedSourceCommit != "" && (!domain.SwarmValidHash(cfg.PinnedSourceCommit, true) || projectKind != domain.ProjectKindSingleRepo || cfg.Kind != domain.KindWorker || cfg.Branch == "" || cfg.Async || cfg.TaskPreparation != "") {
+		return domain.SessionRecord{}, 0, 0, fmt.Errorf("spawn: pinned source requires a full commit, new branch and synchronous single-repository worker")
 	}
 	if standalone && cfg.Kind != domain.KindWorker {
 		return domain.SessionRecord{}, 0, 0, fmt.Errorf("spawn: standalone sessions must be workers")
@@ -1338,7 +1346,10 @@ func (m *Manager) Spawn(ctx context.Context, cfg ports.SpawnConfig) (domain.Sess
 		}
 	}
 	if ws.Path == "" {
-		baseRefs := m.refreshDefaultBranchesBestEffort(ctx, project)
+		var baseRefs map[string]string
+		if cfg.PinnedSourceCommit == "" {
+			baseRefs = m.refreshDefaultBranchesBestEffort(ctx, project)
+		}
 		ws, workspaceProject, err = m.createSessionWorkspace(ctx, project, cfg, id, branch, baseRefs)
 	}
 	if err != nil {
@@ -1374,6 +1385,18 @@ func (m *Manager) Spawn(ctx context.Context, cfg ports.SpawnConfig) (domain.Sess
 			return domain.SessionRecord{}, 0, 0, wrapSpawnStage(id, ErrSpawnAttachments, err)
 		}
 		prompt = appendAttachmentReferences(prompt, refs)
+	}
+
+	// Provisioning can run repository commands, so recheck the actual checkout
+	// immediately before handing it to the controller. This is an ordinary AO
+	// launch check, not an atomic filesystem or exact-scheduler fence.
+	if cfg.PinnedSourceCommit != "" {
+		head, headOK := spawnGitSingleLine(ctx, ws.Path, "rev-parse", "--verify", "HEAD")
+		actualBranch, branchOK := spawnGitSingleLine(ctx, ws.Path, "symbolic-ref", "--short", "HEAD")
+		if !headOK || !branchOK || head != cfg.PinnedSourceCommit || actualBranch != branch || ws.BaseSHA != cfg.PinnedSourceCommit || ws.BaseRef != cfg.PinnedSourceCommit {
+			m.rollbackSeedSpawnWorkspace(ctx, rec, ws, workspaceProject, false, false)
+			return domain.SessionRecord{}, 0, 0, wrapSpawnStage(id, ErrWorkspaceCreate, errors.New("pinned source checkout changed or was not verified before launch"))
+		}
 	}
 
 	// Everything above is shared: project, harness, prompts, seed row, worktree,
@@ -1987,14 +2010,15 @@ func (m *Manager) createSessionWorkspace(ctx context.Context, project domain.Pro
 			baseBranch = ""
 		}
 		workspaceCfg := ports.WorkspaceConfig{
-			ProjectID:     cfg.ProjectID,
-			SessionID:     id,
-			Kind:          cfg.Kind,
-			SessionPrefix: sessionPrefix(project),
-			Branch:        branch,
-			FreshBranch:   cfg.TaskPreparation != "",
-			BaseBranch:    baseBranch,
-			BaseRef:       baseRefs[filepath.Clean(project.Path)],
+			ProjectID:          cfg.ProjectID,
+			SessionID:          id,
+			Kind:               cfg.Kind,
+			SessionPrefix:      sessionPrefix(project),
+			Branch:             branch,
+			PinnedSourceCommit: cfg.PinnedSourceCommit,
+			FreshBranch:        cfg.TaskPreparation != "",
+			BaseBranch:         baseBranch,
+			BaseRef:            baseRefs[filepath.Clean(project.Path)],
 		}
 		ws, err := m.workspace.Create(ctx, workspaceCfg)
 		if errors.Is(err, ports.ErrWorkspaceBranchCheckedOutElsewhere) && cfg.Kind == domain.KindOrchestrator && cfg.Branch == "" {
@@ -5925,12 +5949,41 @@ func appendAttachmentReferences(prompt string, refs []string) string {
 // promptless spawn delivers no user prompt at all: the agent simply lands at an
 // empty input box rather than receiving an auto-generated kickoff turn.
 func (m *Manager) buildSpawnTexts(ctx context.Context, cfg ports.SpawnConfig, sessionID domain.SessionID) (prompt, systemPrompt string, err error) {
+	if cfg.SupervisedAssignment {
+		if err := validateSupervisedAssignment(cfg); err != nil {
+			return "", "", err
+		}
+		project, err := m.loadProject(ctx, cfg.ProjectID)
+		if err != nil {
+			return "", "", err
+		}
+		rules, err := buildProjectRules(projectRulesConfig{ProjectPath: project.Path, AgentRules: project.Config.AgentRules, AgentRulesFile: project.Config.AgentRulesFile})
+		if err != nil {
+			return "", "", err
+		}
+		// Preserve the supplied packet and explicit project rules without
+		// importing ordinary issue, orchestrator, AO skill or report workflows.
+		return cfg.Prompt, buildSystemPromptText(systemPromptConfig{Role: sessionPromptRoleWorker, SupervisedAssignment: true, PinnedSourceCommit: cfg.PinnedSourceCommit, ProjectRules: rules}), nil
+	}
+
 	prompt = buildPrompt(cfg)
 	systemPrompt, err = m.buildSystemPrompt(ctx, cfg.Kind, cfg.ProjectID, sessionID, cfg.RequestedOutput, domain.NormalizeSessionMode(cfg.RequestedMode) == domain.SessionModeChat)
 	if err != nil {
 		return "", "", err
 	}
 	return prompt, systemPrompt, nil
+}
+
+// validateSupervisedAssignment keeps the internal prompt profile bound to the
+// supervised launch permissions and source-pinned worker path.
+func validateSupervisedAssignment(cfg ports.SpawnConfig) error {
+	if !cfg.SupervisedAssignment {
+		return nil
+	}
+	if cfg.ProjectID == "" || cfg.Kind != domain.KindWorker || cfg.Harness != domain.HarnessCodex || cfg.RequestedMode != domain.SessionModeChat || !domain.SwarmValidHash(cfg.PinnedSourceCommit, true) || cfg.Branch == "" || cfg.Async || cfg.TaskPreparation != "" || cfg.AgentConfig.Permissions != ports.PermissionModeAcceptEdits || strings.TrimSpace(cfg.Prompt) == "" {
+		return errors.New("spawn: supervised assignment requires a pinned synchronous Codex chat worker with accept-edits permissions and a supplied task")
+	}
+	return nil
 }
 
 // buildSystemPrompt derives the standing instructions for a session of the

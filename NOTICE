@@ -1,0 +1,18 @@
+Praxis Swarm
+
+An independent source fork of Agent Orchestrator
+https://github.com/OrchestratorInc/agent-orchestrator
+Base commit: 71bb19f5947a64853ee6d11225bc896563878c50
+Upstream copyright notice: Copyright 2026 Untrivial
+
+Modified for Praxis Swarm: task and handoff contracts, usage accounting,
+supervised two-worker execution, verification, and release documentation.
+Original copyright, license and asset notices remain in place.
+See LICENSE, licenses/MIT.txt and THIRD_PARTY_NOTICES.md for retained terms.
+
+OpenSwarm and OpenHands concept references are described in
+THIRD_PARTY_NOTICES.md and docs/swarm/UPSTREAM.md; their implementations
+are not bundled by this source release.
+
+These attribution notices do not modify the retained licenses or imply
+endorsement by upstream contributors, OrchestratorInc, or OpenAI.

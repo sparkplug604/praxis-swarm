@@ -1,3 +1,5 @@
+// Modified for Praxis Swarm: task contracts, supervised execution and verification.
+
 package commandcode
 
 import (
@@ -1003,7 +1005,11 @@ func TestPrepareSessionHomeAnchorsConditionalIncludeHeaders(t *testing.T) {
 	if err != nil || len(copies) == 0 {
 		t.Fatalf("session git config copies = %v (%v), want the rewritten config", copies, err)
 	}
-	anchored := "gitdir:" + filepath.ToSlash(realHome) + "/"
+	canonicalHome, err := filepath.EvalSymlinks(realHome)
+	if err != nil {
+		t.Fatal(err)
+	}
+	anchored := "gitdir:" + filepath.ToSlash(canonicalHome) + "/"
 	for _, entry := range copies {
 		contents := readHomeFile(t, filepath.Join(home, sessionGitConfigCopiesDir, entry.Name()))
 		for _, stale := range []string{"~/", "gitdir:./", "gitdir/i:./"} {
@@ -1014,6 +1020,83 @@ func TestPrepareSessionHomeAnchorsConditionalIncludeHeaders(t *testing.T) {
 		if !strings.Contains(string(contents), anchored) {
 			t.Fatalf("copy %s = %q, want the gitdir:./ condition anchored to %q", entry.Name(), contents, anchored)
 		}
+	}
+}
+
+func TestPrepareSessionHomePreservesConditionalIncludesThroughSymlinks(t *testing.T) {
+	git, err := exec.LookPath("git")
+	if err != nil {
+		t.Skip("git is unavailable")
+	}
+	for _, kind := range []string{"home directory", "config file"} {
+		t.Run(kind, func(t *testing.T) {
+			root := t.TempDir()
+			realHome := filepath.Join(root, "home")
+			makeHomeDir(t, realHome)
+			home := realHome
+			source := filepath.Join(realHome, ".gitconfig")
+			var link, target string
+			if kind == "home directory" {
+				home = filepath.Join(root, "home-alias")
+				link, target = home, realHome
+			} else {
+				source = filepath.Join(root, "config-source", "config")
+				makeHomeDir(t, filepath.Dir(source))
+				link, target = filepath.Join(home, ".gitconfig"), source
+			}
+			if err := os.Symlink(target, link); err != nil {
+				t.Skipf("symlinks unavailable: %v", err)
+			}
+			t.Setenv("HOME", home)
+			t.Setenv("USERPROFILE", home)
+			t.Setenv("XDG_CONFIG_HOME", "")
+			t.Setenv("APPDATA", t.TempDir())
+
+			relativeIdentity := filepath.Join(root, "relative.gitconfig")
+			homeIdentity := filepath.Join(root, "home.gitconfig")
+			writeHomeFile(t, relativeIdentity, []byte("[test]\n\trelative = matched\n"))
+			writeHomeFile(t, homeIdentity, []byte("[test]\n\thome = matched\n"))
+			writeHomeFile(t, filepath.Join(realHome, "logical.gitconfig"), []byte("[test]\n\tordinary = logical\n"))
+			if kind == "config file" {
+				// Unlike gitdir:./, an ordinary include remains relative to the
+				// logical config filename, even when that file is a symlink.
+				writeHomeFile(t, filepath.Join(filepath.Dir(source), "logical.gitconfig"), []byte("[test]\n\tordinary = wrong-physical-base\n"))
+			}
+			writeHomeFile(t, source, []byte("[include]\n\tpath = logical.gitconfig\n"+
+				"[includeIf \"gitdir:./work*/**\"]\n\tpath = "+gitConfigString(filepath.ToSlash(relativeIdentity))+"\n"+
+				"[includeIf \"gitdir/i:~/projects/**\"]\n\tpath = "+gitConfigString(filepath.ToSlash(homeIdentity))+"\n"))
+
+			repos := []struct {
+				path     string
+				relative string
+				home     string
+			}{
+				{filepath.Join(filepath.Dir(source), "workspace", "app"), "matched", ""},
+				{filepath.Join(realHome, "projects", "app"), "", "matched"},
+				{filepath.Join(root, "outside"), "", ""},
+			}
+			for _, repo := range repos {
+				makeHomeDir(t, repo.path)
+				if output, err := exec.Command(git, "init", "-q", repo.path).CombinedOutput(); err != nil {
+					t.Fatalf("git init: %v: %s", err, output)
+				}
+			}
+			sessionHome := prepareHome(t, t.TempDir(), domain.SessionID("symlink"), "worker role")
+			for _, repo := range repos {
+				original := effectiveGitConfigIn(t, home, "", repo.path)
+				relocated := effectiveGitConfigIn(t, sessionHome, "", repo.path)
+				for key, want := range map[string]string{
+					"test.relative": repo.relative, "test.home": repo.home, "test.ordinary": "logical",
+				} {
+					if original[key] != want {
+						t.Fatalf("original Git config for %s: %s = %q, want %q", repo.path, key, original[key], want)
+					}
+					if relocated[key] != original[key] {
+						t.Errorf("relocated Git config for %s: %s = %q, original %q", repo.path, key, relocated[key], original[key])
+					}
+				}
+			}
+		})
 	}
 }
 
@@ -1235,6 +1318,7 @@ func TestGitConditionPatternAnchoring(t *testing.T) {
 	}{
 		{condition: "gitdir:./", want: "gitdir:/home/user/configs/", ok: true},
 		{condition: "gitdir:./work/", want: "gitdir:/home/user/configs/work/", ok: true},
+		{condition: "gitdir:./work*/../**/", want: "gitdir:/home/user/configs/work*/../**/", ok: true},
 		{condition: "gitdir/i:~/projects/**", want: "gitdir/i:/home/user/projects/**", ok: true},
 		{condition: "gitdir:~/", want: "gitdir:/home/user/", ok: true},
 		{condition: "gitdir:/absolute/", ok: false},
