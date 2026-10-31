@@ -10,6 +10,14 @@ outputs for lead review. Fresh orchestrator sessions receive these instructions;
 existing sessions need a new turn with the workflow or a fresh session to consume
 the updated standing instructions. Use a daemon built from this checkout.
 
+## Project Discovery
+
+The managed lead can persist clarification through native `discovery_get` and
+`discovery_save`. Once a project has a discovery record, preparation and new
+launches require its current ready `brief` reference (`revision`, `sha256`).
+Updates append immutable revisions using `expectedRevision`; older prepared
+plans are rejected at new-run creation. See [Project Discovery](PROJECT_DISCOVERY.md).
+
 ## Lead workflow
 
 Ask the AO lead to use **Praxis Swarm** for a suitable project goal. The instructions

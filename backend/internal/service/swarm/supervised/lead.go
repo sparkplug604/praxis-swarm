@@ -2,6 +2,7 @@ package supervised
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -15,6 +16,16 @@ import (
 
 // Prepare builds packets from lead decisions and daemon-observed source facts, without launching.
 func (s *Service) Prepare(ctx context.Context, p planning.LeadProposal) (planning.PreparedProposal, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	brief, err := s.checkBrief(ctx, p.ProjectID, p.Brief)
+	if err != nil {
+		return planning.PreparedProposal{}, err
+	}
+	if brief.Revision > 0 {
+		body, _ := json.Marshal(brief.Brief)
+		p.Specification = "Project brief (supplied decisions; do not override):\n" + string(body) + "\nTask-specific details:\n" + p.Specification
+	}
 	source, err := s.runtime.ProjectPath(ctx, p.ProjectID)
 	if err != nil {
 		return planning.PreparedProposal{}, err

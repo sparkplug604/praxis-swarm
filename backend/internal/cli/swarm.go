@@ -80,7 +80,7 @@ func newSwarmCommand(c *commandContext) *cobra.Command {
 	run.Flags().IntVar(&timeout, "timeout", 240, "Daemon-owned run deadline in seconds (10–600)")
 	run.Flags().BoolVar(&wait, "wait", true, "Wait for the final report; interrupting does not stop the run")
 	cmd.AddCommand(run)
-	cmd.AddCommand(newSwarmPrepareCommand(c), newSwarmReviewCommand(c), newSwarmProposalCommand())
+	cmd.AddCommand(newSwarmDiscoveryCommand(c), newSwarmPrepareCommand(c), newSwarmReviewCommand(c), newSwarmProposalCommand())
 	for _, action := range []string{"get", "stop"} {
 		cmd.AddCommand(&cobra.Command{Use: action + " ID", Short: action + " a supervised run and print its JSON report", Args: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.ContainsAny(args[0], "/?#") {

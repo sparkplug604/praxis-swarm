@@ -48,6 +48,10 @@ Codex may request a necessary local execution or network permission. Read the
 request and approve only the work above. A prerequisite or permission failure
 should be reported before model execution continues.
 
+If the managed lead needs clarification, answer in that chat or ask your setup
+chat to relay your answer. It can retain the questions and decisions through
+[Project Discovery](PROJECT_DISCOVERY.md).
+
 ## What you should see
 
 Codex first reports its disposable project and lead session ID. The managed lead

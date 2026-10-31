@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strconv"
 )
 
 // swarmLead binds the tool to the AO session supplied by the native tool host.
@@ -34,8 +35,22 @@ func (c *commandContext) swarmTools(ctx context.Context) []map[string]any {
 	if _, err := c.swarmLead(ctx); err != nil {
 		return nil
 	}
-	return []map[string]any{{"name": "swarm", "description": "Coordinate Praxis Swarm through the owned daemon without shell networking. prepare validates a lead-authored proposal and returns an opaque preparedId; start consumes model usage and must be authorized. get/stop/review take runId. Only the current orchestrator's project is allowed. Review returns a combined directory/checks for you to inspect and execute with your session tools; no automatic acceptance/merge. If the tool host restarts, recover an existing run with get instead of launching a replacement.", "inputSchema": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"action"}, "properties": map[string]any{
-		"action":     map[string]any{"type": "string", "enum": []string{"prepare", "start", "get", "stop", "review"}},
+	return []map[string]any{{"name": "swarm", "description": "Coordinate Praxis Swarm through the owned daemon without shell networking. Start discovery_get/discovery_save to persist questions, supplied answers and a project brief. Ask the human material questions in chat and wait for answers. A ready brief must be referenced by revision/sha256 as proposal.brief; changes invalidate pending prepared plans. prepare validates a lead-authored proposal and returns an opaque preparedId; start consumes model usage and must be authorized. get/stop/review take runId. Only the current orchestrator's project is allowed. Review returns a combined directory/checks for you to inspect and execute with your session tools; no automatic acceptance/merge. If the tool host restarts, recover an existing run with get instead of launching a replacement.", "inputSchema": map[string]any{"type": "object", "additionalProperties": false, "required": []string{"action"}, "properties": map[string]any{
+		"action":   map[string]any{"type": "string", "enum": []string{"discovery_get", "discovery_save", "prepare", "start", "get", "stop", "review"}},
+		"revision": map[string]any{"type": "integer", "minimum": 0},
+		"discovery": map[string]any{"type": "object", "required": []string{"expectedRevision", "brief"}, "additionalProperties": false, "properties": map[string]any{
+			"expectedRevision": map[string]any{"type": "integer", "minimum": 0},
+			"brief": map[string]any{"type": "object", "additionalProperties": false, "properties": map[string]any{
+				"goal": map[string]any{"type": "string"}, "audience": map[string]any{"type": "string"},
+				"outcomes":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"acceptance":  map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"constraints": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"assumptions": map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"questions": map[string]any{"type": "array", "maxItems": 16, "items": map[string]any{"type": "object", "required": []string{"id", "question", "required"}, "additionalProperties": false, "properties": map[string]any{
+					"id": map[string]any{"type": "string"}, "question": map[string]any{"type": "string"}, "required": map[string]any{"type": "boolean"}, "answer": map[string]any{"type": "string", "description": "Empty string when unanswered; never null. Do not invent a human answer."},
+				}}},
+			}},
+		}, "description": "Save complete supplied decisions and questions with the latest expectedRevision; zero creates the first revision."},
 		"proposal":   map[string]any{"type": "object", "description": "The full lead-authored proposal JSON, required for prepare; get format via ao swarm proposal."},
 		"preparedId": map[string]any{"type": "string"}, "requestId": map[string]any{"type": "string"}, "runId": map[string]any{"type": "string"}, "timeoutSeconds": map[string]any{"type": "integer", "minimum": 10, "maximum": 600},
 	}}}}
@@ -52,6 +67,8 @@ func (c *commandContext) callSwarm(ctx context.Context, state *mcpState, raw jso
 		return mcpToolError(err)
 	}
 	var args struct {
+		Discovery      json.RawMessage `json:"discovery"`
+		Revision       int64           `json:"revision"`
 		Action         string          `json:"action"`
 		Proposal       json.RawMessage `json:"proposal"`
 		PreparedID     string          `json:"preparedId"`
@@ -72,6 +89,13 @@ func (c *commandContext) callSwarm(ctx context.Context, state *mcpState, raw jso
 	}
 	var output json.RawMessage
 	switch args.Action {
+	case "discovery_get":
+		if args.Revision < 0 {
+			return mcpToolError(errors.New("revision cannot be negative"))
+		}
+		err = c.getJSON(ctx, "swarm/discovery/"+url.PathEscape(lead.ProjectID)+"?revision="+strconv.FormatInt(args.Revision, 10), &output)
+	case "discovery_save":
+		err = c.postJSON(ctx, "swarm/discovery/"+url.PathEscape(lead.ProjectID), args.Discovery, &output)
 	case "prepare":
 		var proposal struct {
 			ProjectID string `json:"projectId"`
@@ -166,6 +190,9 @@ func (c *commandContext) callSwarm(ctx context.Context, state *mcpState, raw jso
 		}
 	default:
 		return mcpToolError(fmt.Errorf("unknown swarm action %q", args.Action))
+	}
+	if err != nil {
+		return mcpToolError(err)
 	}
 	// Worker packets duplicate the supplied specification. Keep tool reports compact;
 	// complete records remain daemon-owned and available through ordinary run evidence.

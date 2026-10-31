@@ -163,6 +163,13 @@ func schemaName(_ reflect.Type, defaultName string) string {
 // by projectOperations(). Add an entry when a new contract type is introduced;
 // the drift test fails until the spec is regenerated, which flags the gap.
 var schemaNames = map[string]string{ //nolint:gosec // Public OpenAPI type names include reset-credit contracts; no credential value is stored here.
+	"DomainSwarmBriefDraft":                                "SwarmBriefDraft",
+	"DomainSwarmDiscoveryQuestion":                         "SwarmDiscoveryQuestion",
+	"DomainSwarmDiscoveryUpdate":                           "SwarmDiscoveryUpdate",
+	"DomainSwarmBriefRef":                                  "SwarmBriefRef",
+	"DomainSwarmDiscoveryBrief":                            "SwarmDiscoveryBrief",
+	"ControllersSwarmDiscoveryProjectParam":                "SwarmDiscoveryProjectParam",
+	"ControllersSwarmDiscoveryQuery":                       "SwarmDiscoveryQuery",
 	"ControllersStartSupervisedSwarmRequest":               "StartSupervisedSwarmRequest",
 	"ControllersSupervisedSwarmContextInput":               "SupervisedSwarmContextInput",
 	"ControllersSupervisedSwarmRunIDParam":                 "SupervisedSwarmRunIDParam",
@@ -874,6 +881,8 @@ func identityOperations() []operation {
 func supervisedSwarmOperations() []operation {
 	errors := []respUnit{{http.StatusBadRequest, envelope.APIError{}}, {http.StatusNotFound, envelope.APIError{}}, {http.StatusConflict, envelope.APIError{}}, {http.StatusRequestEntityTooLarge, envelope.APIError{}}, {http.StatusInternalServerError, envelope.APIError{}}, {http.StatusNotImplemented, envelope.APIError{}}}
 	return []operation{
+		{method: http.MethodGet, path: "/api/v1/swarm/discovery/{projectId}", id: "getSwarmDiscovery", tag: "swarm", summary: "Read a retained project discovery brief", pathParams: []any{controllers.SwarmDiscoveryProjectParam{}, controllers.SwarmDiscoveryQuery{}}, resps: append([]respUnit{{http.StatusOK, domain.SwarmDiscoveryBrief{}}}, errors...)},
+		{method: http.MethodPost, path: "/api/v1/swarm/discovery/{projectId}", id: "saveSwarmDiscovery", tag: "swarm", summary: "Append a project discovery revision with optimistic concurrency", pathParams: []any{controllers.SwarmDiscoveryProjectParam{}}, reqBody: domain.SwarmDiscoveryUpdate{}, resps: append([]respUnit{{http.StatusOK, domain.SwarmDiscoveryBrief{}}}, errors...)},
 		{method: http.MethodPost, path: "/api/v1/swarm/prepare", id: "prepareLeadSwarm", tag: "swarm", summary: "Build a lead proposal without launching", reqBody: planning.LeadProposal{}, resps: append([]respUnit{{http.StatusOK, planning.PreparedProposal{}}}, errors...)},
 		{method: http.MethodPost, path: "/api/v1/swarm/runs/{runId}/review", id: "reviewLeadSwarm", tag: "swarm", summary: "Assemble captured candidates for lead review", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, supervised.ReviewBundle{}}}, errors...)},
 

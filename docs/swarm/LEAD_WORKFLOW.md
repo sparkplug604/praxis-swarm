@@ -16,6 +16,9 @@ review**. They use your existing Codex login and consume model usage. The tested
 setup is macOS with Bash, Git, Python 3 and Go 1.27.1; no desktop build is needed.
 The lead creates the worker plan; you do not write a plan JSON file.
 
+To shape an incomplete goal, use [Project Discovery](PROJECT_DISCOVERY.md).
+The managed lead saves questions and decisions, then binds planning to the ready brief.
+
 After the first run, see [using your own project](GET_STARTED_CODEX.md#use-your-own-project).
 For proposal fields, native tools, permissions, API operations and recovery, use
 the [technical reference](LEAD_REFERENCE.md). To supply an existing plan yourself,

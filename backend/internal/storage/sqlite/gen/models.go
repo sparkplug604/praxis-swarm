@@ -882,6 +882,12 @@ type SwarmContract struct {
 	ContractJson string
 }
 
+type SwarmDiscoveryBrief struct {
+	ProjectID   string
+	Revision    int64
+	PayloadJson string
+}
+
 type SwarmEvidence struct {
 	ID         string
 	AttemptID  string
