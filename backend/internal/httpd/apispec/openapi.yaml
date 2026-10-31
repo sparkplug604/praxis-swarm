@@ -12756,6 +12756,61 @@ paths:
       summary: ""
       tags:
       - conversations
+  /api/v1/swarm/prepare:
+    post:
+      operationId: prepareLeadSwarm
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanningLeadProposal'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanningPreparedProposal'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Build a lead proposal without launching
+      tags:
+      - swarm
   /api/v1/swarm/runs:
     post:
       operationId: startSupervisedSwarmRun
@@ -12864,6 +12919,61 @@ paths:
                 $ref: '#/components/schemas/APIError'
           description: Not Implemented
       summary: Get a supervised swarm report
+      tags:
+      - swarm
+  /api/v1/swarm/runs/{runId}/review:
+    post:
+      operationId: reviewLeadSwarm
+      parameters:
+      - in: path
+        name: runId
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupervisedReviewBundle'
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Bad Request
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Found
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Conflict
+        "413":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Request Entity Too Large
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Internal Server Error
+        "501":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIError'
+          description: Not Implemented
+      summary: Assemble captured candidates for lead review
       tags:
       - swarm
   /api/v1/swarm/runs/{runId}/stop:
@@ -17441,6 +17551,295 @@ components:
       - selection
       - sourceRole
       type: object
+    DomainSwarmAcceptance:
+      properties:
+        checks:
+          items:
+            $ref: '#/components/schemas/DomainSwarmAcceptanceCheck'
+          type: array
+        oracleId:
+          type: string
+      required:
+      - oracleId
+      - checks
+      type: object
+    DomainSwarmAcceptanceCheck:
+      properties:
+        command:
+          items:
+            type: string
+          type: array
+        errorRuleId:
+          type: string
+        expectedExitCode:
+          type: integer
+        expectedResult:
+          type: string
+        id:
+          type: string
+      required:
+      - id
+      - command
+      - expectedExitCode
+      - expectedResult
+      type: object
+    DomainSwarmContextRef:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        required:
+          type: boolean
+        selectors:
+          $ref: '#/components/schemas/DomainSwarmContextSelectors'
+        sha256:
+          type: string
+      required:
+      - id
+      - kind
+      - sha256
+      - required
+      - selectors
+      type: object
+    DomainSwarmContextSelectors:
+      properties:
+        backends:
+          items:
+            type: string
+          type: array
+        paths:
+          items:
+            type: string
+          type: array
+        taskTypes:
+          items:
+            type: string
+          type: array
+      required:
+      - taskTypes
+      - backends
+      - paths
+      type: object
+    DomainSwarmDependency:
+      properties:
+        taskId:
+          type: string
+        version:
+          format: int64
+          type: integer
+      required:
+      - taskId
+      - version
+      type: object
+    DomainSwarmErrorRule:
+      properties:
+        destination:
+          type: string
+        effect:
+          type: string
+        id:
+          type: string
+        signal:
+          type: string
+        value:
+          type: string
+        when:
+          type: string
+      required:
+      - id
+      - when
+      - signal
+      - value
+      - destination
+      - effect
+      type: object
+    DomainSwarmInterface:
+      properties:
+        contract:
+          type: string
+        errorRuleIds:
+          items:
+            type: string
+          type: array
+        id:
+          type: string
+        ownership:
+          type: string
+      required:
+      - id
+      - contract
+      - ownership
+      - errorRuleIds
+      type: object
+    DomainSwarmPlan:
+      properties:
+        budgetBucket:
+          type: string
+        maxActive:
+          format: int64
+          type: integer
+        objective:
+          type: string
+        projectId:
+          type: string
+        protocolVersion:
+          format: int64
+          type: integer
+        sourceCommit:
+          type: string
+        tasks:
+          items:
+            $ref: '#/components/schemas/DomainSwarmTaskContract'
+          type: array
+        tokenLimit:
+          format: int64
+          type: integer
+        version:
+          format: int64
+          type: integer
+      required:
+      - protocolVersion
+      - version
+      - projectId
+      - sourceCommit
+      - objective
+      - budgetBucket
+      - tokenLimit
+      - maxActive
+      - tasks
+      type: object
+    DomainSwarmResource:
+      properties:
+        key:
+          type: string
+        kind:
+          type: string
+        namespace:
+          type: string
+      required:
+      - namespace
+      - kind
+      - key
+      type: object
+    DomainSwarmSelection:
+      properties:
+        effort:
+          type: string
+        harness:
+          type: string
+        model:
+          type: string
+      required:
+      - harness
+      - model
+      - effort
+      type: object
+    DomainSwarmTaskContract:
+      properties:
+        agent:
+          $ref: '#/components/schemas/DomainSwarmSelection'
+        dependencies:
+          items:
+            $ref: '#/components/schemas/DomainSwarmDependency'
+          type: array
+        id:
+          type: string
+        objective:
+          type: string
+        oracleHash:
+          type: string
+        reserveTokens:
+          format: int64
+          type: integer
+        resources:
+          items:
+            $ref: '#/components/schemas/DomainSwarmResource'
+          type: array
+        role:
+          type: string
+        version:
+          format: int64
+          type: integer
+        work:
+          $ref: '#/components/schemas/DomainSwarmWorkSpec'
+      required:
+      - id
+      - version
+      - objective
+      - oracleHash
+      - agent
+      - dependencies
+      - resources
+      - reserveTokens
+      type: object
+    DomainSwarmToolIdentity:
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        sha256:
+          type: string
+        version:
+          type: string
+      required:
+      - name
+      - path
+      - sha256
+      - version
+      type: object
+    DomainSwarmWorkSpec:
+      properties:
+        acceptance:
+          $ref: '#/components/schemas/DomainSwarmAcceptance'
+        context:
+          items:
+            $ref: '#/components/schemas/DomainSwarmContextRef'
+          type: array
+        contextByteLimit:
+          type: integer
+        errors:
+          items:
+            $ref: '#/components/schemas/DomainSwarmErrorRule'
+          type: array
+        interfaces:
+          items:
+            $ref: '#/components/schemas/DomainSwarmInterface'
+          type: array
+        nonGoals:
+          items:
+            type: string
+          type: array
+        onBlocked:
+          type: string
+        onComplete:
+          type: string
+        progressPath:
+          type: string
+        taskType:
+          type: string
+        tools:
+          items:
+            $ref: '#/components/schemas/DomainSwarmToolIdentity'
+          type: array
+        version:
+          format: int64
+          type: integer
+      required:
+      - version
+      - taskType
+      - contextByteLimit
+      - nonGoals
+      - interfaces
+      - errors
+      - acceptance
+      - context
+      - tools
+      - progressPath
+      - onComplete
+      - onBlocked
+      type: object
     EditConversationMessageRequest:
       properties:
         clientMessageId:
@@ -18752,6 +19151,164 @@ components:
       - title
       - targetSha
       - status
+      type: object
+    PlanningLeadProposal:
+      properties:
+        effort:
+          type: string
+        model:
+          type: string
+        objective:
+          type: string
+        projectId:
+          type: string
+        specification:
+          type: string
+        tasks:
+          items:
+            $ref: '#/components/schemas/PlanningProposalTask'
+          type: array
+        tokenLimit:
+          format: int64
+          type: integer
+        tools:
+          items:
+            $ref: '#/components/schemas/PlanningProposalTool'
+          type: array
+      required:
+      - projectId
+      - objective
+      - specification
+      - model
+      - effort
+      - tokenLimit
+      - tools
+      - tasks
+      type: object
+    PlanningOmittedContext:
+      properties:
+        id:
+          type: string
+        reason:
+          type: string
+      required:
+      - id
+      - reason
+      type: object
+    PlanningPreparedProposal:
+      properties:
+        context:
+          items:
+            $ref: '#/components/schemas/PlanningSuppliedContext'
+          type: array
+        packets:
+          items:
+            $ref: '#/components/schemas/PlanningSupervisedPacket'
+          type: array
+        plan:
+          $ref: '#/components/schemas/DomainSwarmPlan'
+      required:
+      - plan
+      - context
+      - packets
+      type: object
+    PlanningProposalTask:
+      properties:
+        acceptance:
+          $ref: '#/components/schemas/DomainSwarmAcceptance'
+        errors:
+          items:
+            $ref: '#/components/schemas/DomainSwarmErrorRule'
+          type: array
+        id:
+          type: string
+        interfaces:
+          items:
+            $ref: '#/components/schemas/DomainSwarmInterface'
+          type: array
+        nonGoals:
+          items:
+            type: string
+          type: array
+        objective:
+          type: string
+        paths:
+          items:
+            type: string
+          type: array
+        progressPath:
+          type: string
+      required:
+      - id
+      - objective
+      - paths
+      - nonGoals
+      - interfaces
+      - errors
+      - acceptance
+      - progressPath
+      type: object
+    PlanningProposalTool:
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        version:
+          type: string
+      required:
+      - name
+      - path
+      - version
+      type: object
+    PlanningSupervisedPacket:
+      properties:
+        byteCount:
+          type: integer
+        contractHash:
+          type: string
+        markdown:
+          type: string
+        omitted:
+          items:
+            $ref: '#/components/schemas/PlanningOmittedContext'
+          type: array
+        planHash:
+          type: string
+        profile:
+          type: string
+        requested:
+          $ref: '#/components/schemas/DomainSwarmSelection'
+        runId:
+          type: string
+        sha256:
+          type: string
+        sourceCommit:
+          type: string
+        taskId:
+          type: string
+      required:
+      - profile
+      - runId
+      - taskId
+      - sourceCommit
+      - planHash
+      - contractHash
+      - requested
+      - markdown
+      - byteCount
+      - sha256
+      - omitted
+      type: object
+    PlanningSuppliedContext:
+      properties:
+        body:
+          type: string
+        id:
+          type: string
+      required:
+      - id
+      - body
       type: object
     PrepareTaskResponse:
       properties:
@@ -21684,6 +22241,121 @@ components:
       - runId
       - verdict
       type: object
+    SupervisedObservation:
+      properties:
+        completedAt:
+          format: date-time
+          type:
+          - "null"
+          - string
+        controller:
+          type: string
+        effort:
+          type: string
+        model:
+          type: string
+        modelEvidence:
+          type: string
+        observedAt:
+          format: date-time
+          type: string
+        promptBytes:
+          type: integer
+        promptEvidence:
+          type: string
+        providerTurnId:
+          type: string
+        startedAt:
+          format: date-time
+          type:
+          - "null"
+          - string
+        systemPromptBytes:
+          type: integer
+        turnState:
+          type: string
+        usage: {}
+      required:
+      - controller
+      - turnState
+      - observedAt
+      type: object
+    SupervisedReviewBundle:
+      properties:
+        checks:
+          items:
+            $ref: '#/components/schemas/DomainSwarmAcceptanceCheck'
+          type: array
+        createdAt:
+          format: date-time
+          type: string
+        directory:
+          type: string
+        instructions:
+          type: string
+        run:
+          $ref: '#/components/schemas/SupervisedRun'
+      required:
+      - run
+      - directory
+      - checks
+      - createdAt
+      - instructions
+      type: object
+    SupervisedRun:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        deadlineAt:
+          format: date-time
+          type: string
+        errors:
+          items:
+            type: string
+          type: array
+        id:
+          type: string
+        limits:
+          items:
+            type: string
+          type: array
+        plan:
+          $ref: '#/components/schemas/DomainSwarmPlan'
+        profile:
+          type: string
+        requestHash:
+          type: string
+        requestId:
+          type: string
+        sourcePath:
+          type: string
+        sourceSnapshot:
+          type: string
+        sourceUnchanged:
+          type: boolean
+        status:
+          type: string
+        tasks:
+          items:
+            $ref: '#/components/schemas/SupervisedTask'
+          type: array
+      required:
+      - id
+      - profile
+      - requestId
+      - requestHash
+      - plan
+      - status
+      - createdAt
+      - deadlineAt
+      - sourcePath
+      - sourceSnapshot
+      - sourceUnchanged
+      - tasks
+      - errors
+      - limits
+      type: object
     SupervisedSwarmContextInput:
       properties:
         body:
@@ -21801,6 +22473,42 @@ components:
         observation:
           $ref: '#/components/schemas/SupervisedSwarmObservationResponse'
         packet: {}
+        requestId:
+          type: string
+        sessionId:
+          type: string
+        snapshotHash:
+          type: string
+        snapshotPath:
+          type: string
+        status:
+          type: string
+        workspacePath:
+          type: string
+      required:
+      - id
+      - requestId
+      - branch
+      - packet
+      - status
+      - observation
+      type: object
+    SupervisedTask:
+      properties:
+        branch:
+          type: string
+        candidateHash:
+          type: string
+        diffPath:
+          type: string
+        error:
+          type: string
+        id:
+          type: string
+        observation:
+          $ref: '#/components/schemas/SupervisedObservation'
+        packet:
+          $ref: '#/components/schemas/PlanningSupervisedPacket'
         requestId:
           type: string
         sessionId:

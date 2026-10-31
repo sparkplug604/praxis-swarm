@@ -469,7 +469,9 @@ func TestSupervisedServiceCancellationStopsKnownSessions(t *testing.T) {
 			f := newServiceFixture(t)
 			f.runtime.complete = false
 			if mode == "parent-deadline" {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				// Allow real Git worktree startup under race instrumentation before the parent expires.
+				// The assertions below still require deadline-driven cancellation and both stops.
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer cancel()
 				f.service.ctx = ctx
 			}

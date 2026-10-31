@@ -1,5 +1,7 @@
 package cli
 
+// Modified by Praxis Swarm: project-scoped native stdio swarm coordination.
+
 import (
 	"bufio"
 	"bytes"
@@ -119,6 +121,7 @@ func (c *commandContext) handleMCP(ctx context.Context, state *mcpState, line []
 		resp.Result = map[string]any{}
 	case "tools/list":
 		tools := append(append([]map[string]any{}, mcpTools...), c.cuaTools(ctx, state)...)
+		tools = append(tools, c.swarmTools(ctx)...)
 		resp.Result = map[string]any{"tools": tools}
 	case "tools/call":
 		var p struct {
@@ -127,6 +130,8 @@ func (c *commandContext) handleMCP(ctx context.Context, state *mcpState, line []
 		}
 		_ = json.Unmarshal(req.Params, &p)
 		switch p.Name {
+		case "swarm":
+			resp.Result = c.callSwarm(ctx, state, p.Arguments)
 		case "html_preview":
 			resp.Result = c.callHTMLPreview(ctx, p.Arguments)
 		case "html_render":

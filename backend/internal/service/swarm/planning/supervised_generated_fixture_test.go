@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/workspace"
 )
 
 func TestSupervisedGeneratedFixtureSatisfiesServiceContracts(t *testing.T) {
@@ -47,6 +49,26 @@ func TestSupervisedGeneratedFixtureSatisfiesServiceContracts(t *testing.T) {
 	var supplied []SuppliedContext
 	if err = json.Unmarshal(raw, &supplied); err != nil {
 		t.Fatal(err)
+	}
+
+	proposalRaw, err := os.ReadFile(filepath.Join(output, "proposal.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	proposal, err := ParseProposal(proposalRaw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := workspace.Capture(ctx, workspace.CaptureRequest{SourceRoot: filepath.Join(output, "repository"), Destination: filepath.Join(output, "lead-source")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	prepared, err := BuildProposal(ctx, proposal, snapshot, FileToolVerifier{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if prepared.Plan.SourceCommit != plan.SourceCommit || len(prepared.Packets) != 2 {
+		t.Fatal("generated lead proposal lost source or packets")
 	}
 	for _, task := range plan.Tasks {
 		t.Run(task.ID, func(t *testing.T) {

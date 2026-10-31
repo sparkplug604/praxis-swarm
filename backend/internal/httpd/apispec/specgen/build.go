@@ -22,6 +22,8 @@ import (
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/githubpat"
 	importsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/importer"
 	projectsvc "github.com/aoagents/agent-orchestrator/backend/internal/service/project"
+	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/planning"
+	"github.com/aoagents/agent-orchestrator/backend/internal/service/swarm/supervised"
 	"github.com/aoagents/agent-orchestrator/backend/internal/service/systeminstall"
 )
 
@@ -872,6 +874,9 @@ func identityOperations() []operation {
 func supervisedSwarmOperations() []operation {
 	errors := []respUnit{{http.StatusBadRequest, envelope.APIError{}}, {http.StatusNotFound, envelope.APIError{}}, {http.StatusConflict, envelope.APIError{}}, {http.StatusRequestEntityTooLarge, envelope.APIError{}}, {http.StatusInternalServerError, envelope.APIError{}}, {http.StatusNotImplemented, envelope.APIError{}}}
 	return []operation{
+		{method: http.MethodPost, path: "/api/v1/swarm/prepare", id: "prepareLeadSwarm", tag: "swarm", summary: "Build a lead proposal without launching", reqBody: planning.LeadProposal{}, resps: append([]respUnit{{http.StatusOK, planning.PreparedProposal{}}}, errors...)},
+		{method: http.MethodPost, path: "/api/v1/swarm/runs/{runId}/review", id: "reviewLeadSwarm", tag: "swarm", summary: "Assemble captured candidates for lead review", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, supervised.ReviewBundle{}}}, errors...)},
+
 		{method: http.MethodPost, path: "/api/v1/swarm/runs", id: "startSupervisedSwarmRun", tag: "swarm", summary: "Start or replay a supervised AO swarm run", reqBody: controllers.StartSupervisedSwarmRequest{}, resps: append([]respUnit{{http.StatusAccepted, controllers.SupervisedSwarmRunResponse{}}}, errors...)},
 		{method: http.MethodGet, path: "/api/v1/swarm/runs/{runId}", id: "getSupervisedSwarmRun", tag: "swarm", summary: "Get a supervised swarm report", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, controllers.SupervisedSwarmRunResponse{}}}, errors...)},
 		{method: http.MethodPost, path: "/api/v1/swarm/runs/{runId}/stop", id: "stopSupervisedSwarmRun", tag: "swarm", summary: "Request supervised swarm stop and return observations", pathParams: []any{controllers.SupervisedSwarmRunIDParam{}}, resps: append([]respUnit{{http.StatusOK, controllers.SupervisedSwarmRunResponse{}}}, errors...)},

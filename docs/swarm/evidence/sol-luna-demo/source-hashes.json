@@ -1,0 +1,9 @@
+{
+  "CONTRACT.md": "10e41a38d69195c23ac70a09fcd0027877baecdd4115adbe23d13db67a992f4d",
+  "duration_parser.py": "27b469d0907c8cda241bb76048f3ce7b645d7a9f9dc0e6dc1d12fcf7803e1b1e",
+  "duration_formatter.py": "985921ec5f9f65e2fe391f3e68fc90f376dd7a4091a246f06ac7216feb5a75f5",
+  "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "tests/test_parse_duration.py": "61c75b7a512d55eff6ae673675fbac587a243c28d4b0771f335461782d28c11c",
+  "tests/test_format_duration.py": "9e732dac0a6f1bf708d07e6ce23fb88465d9070e66a7c84303b6f73035e6cfde",
+  "test_independent_acceptance.py": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525"
+}

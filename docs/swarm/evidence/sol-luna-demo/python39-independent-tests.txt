@@ -1,0 +1,18 @@
+test_integer_oracle_and_roundtrips (test_independent_acceptance.IndependentAcceptance) ... ok
+test_long_inputs_and_type_priority (test_independent_acceptance.IndependentAcceptance) ... ok
+test_no_partial_matches_and_ascii_only (test_independent_acceptance.IndependentAcceptance) ... ok
+test_exact_values (tests.test_format_duration.DurationFormatterTests) ... ok
+test_huge_integer_rejects_portably (tests.test_format_duration.DurationFormatterTests) ... ok
+test_rejects_non_integers (tests.test_format_duration.DurationFormatterTests) ... ok
+test_rejects_out_of_range (tests.test_format_duration.DurationFormatterTests) ... ok
+test_unit_boundaries (tests.test_format_duration.DurationFormatterTests) ... ok
+test_exact_values (tests.test_parse_duration.DurationParserTests) ... ok
+test_huge_text_rejects_portably (tests.test_parse_duration.DurationParserTests) ... ok
+test_independent_units (tests.test_parse_duration.DurationParserTests) ... ok
+test_rejects_invalid_text (tests.test_parse_duration.DurationParserTests) ... ok
+test_rejects_non_strings (tests.test_parse_duration.DurationParserTests) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.007s
+
+OK

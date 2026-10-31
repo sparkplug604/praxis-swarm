@@ -1,5 +1,7 @@
 package cli
 
+// Modified by Praxis Swarm: project-scoped native stdio swarm coordination.
+
 import (
 	"context"
 	"encoding/base64"
@@ -16,9 +18,10 @@ const maxMCPImageBytes = 10 << 20
 
 // mcpState is one `ao mcp` server's memory between messages.
 type mcpState struct {
-	cuaLoaded bool
-	cuaTools  []map[string]any
-	cuaNames  map[string]bool
+	swarmPrepared map[string]mcpPreparedSwarm
+	cuaLoaded     bool
+	cuaTools      []map[string]any
+	cuaNames      map[string]bool
 }
 
 // cuaCallRequest, cuaImage, and cuaCallResponse mirror the daemon's

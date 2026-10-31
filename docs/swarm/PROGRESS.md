@@ -5,6 +5,153 @@ The [GitHub launch plan](GITHUB_LAUNCH_PLAN.md) defines the current first-releas
 sequence; the [full build plan](BUILD_PLAN.md) retains the wider requirements.
 Older game/Praxis handoffs and experimental boards do not override this record.
 
+## Lead workflow publication — 30 October 2026
+
+Publishing the reviewed README, lead proposal/builder, execution and review bridge,
+native stdio permission fix, generated API client, tests and sanitized evidence for
+`sparkplug604/praxis-swarm`. Selected frozen Sol/Luna demonstration files and the
+unchanged independent evaluator are included for a model-free reproduction check.
+Raw transcripts, credentials and runtime/cache state remain outside the repository.
+Prepublication checks passed: full planning/supervised race suites, focused bridge
+race tests, full HTTP/API tests, reproducible API generation, frontend type checking,
+six Python tests, public boundary and zero lint issues. The selected captured demo
+passes all 13 tests on both Python versions. Staged changes have zero secret-scanner
+findings and checked local links. Full inherited suites are left to hosted CI.
+The existing alpha tag remains unchanged; this publishes source on main, not a
+new tag or installer. Hosted validation is pending on this publication commit.
+
+## Sol/high lead with Luna/low workers — 30 October 2026
+
+**Pass on the same disposable Mac fixture.** The user selected Sol/high as lead
+and Luna/low as both workers. The fixture file hashes and AO binary matched the
+prior all-Luna trial. Sol created its own proposal from the contract/tests, passed
+preparation on its first submission, launched exactly two workers through the
+native stdio tool, inspected the combined code and executed eight declared checks
+plus full unittest discovery. Tool invocation/cwd/output/exit evidence independently
+supports the reported review. No prewritten proposal was supplied to the lead.
+
+Native telemetry verifies **gpt-6.1-sol/high** for the lead and **gpt-5.6-luna/low**
+for both workers; all retained network-disabled workspace-write sandboxes.
+Worker provider turns overlapped **17.841664 seconds**. Captured candidate hashes,
+file scopes, unchanged source/tests and observed stopped controllers were checked.
+The unchanged independent oracle and frozen suites passed **13 tests on Python
+3.9.6 and 3.14.3**. The owned daemon exited 0 and its health endpoint/run file were
+absent. Existing implementation and game work were preserved before this update.
+
+Catalog preflight initially treated an empty manually selected model list as
+unconfirmed. It created zero sessions; AO permits direct model selection, so the
+trial then submitted the exact selected IDs and verified actual native telemetry.
+No model substitution, replacement worker, production merge or publication.
+
+[Sanitized evidence](evidence/lead-sol-luna-confirmation.json). Raw private local
+archive: `outputs/swarm-build/lead-sol-luna-20261030`, actual execution under
+`execution/`. Per-session counters and prior-run comparison are retained; cached
+input is included in input totals. These runs establish this mixed-model workflow,
+not measured billing savings or general model superiority. Astra was not tested.
+
+**Next gate:** a separately authorized real-project task and broader recovery/
+review evaluation. The publication entry above records repository status.
+
+## Lead-to-swarm live confirmation — 30 October 2026
+
+**Pass on one disposable Mac fixture.** A fresh Luna/low AO lead created its own
+proposal from the duration contract and frozen tests, corrected two schema/semantic
+validation errors, prepared the plan, and launched exactly two Luna/low workers
+through the native AO stdio swarm tool. Provider turns overlapped **12.065120s**.
+Both workers completed; their scoped candidate files and hashes were verified.
+
+The lead assembled a combined review directory, inspected both implementations,
+and actually ran the formatter suite, parser suite and full discovery. Independent
+inspection of tool commands/cwd/exit results confirms execution coverage for all
+four declared check IDs (pairs share the same module-suite argv). The lead saved
+proposal.json, review-report.json and check-results.log in its session artifacts.
+An unchanged independent oracle plus frozen suites passed **13 tests on Python
+3.9.6 and 3.14.3**, including 1,010 oracle/roundtrip cases.
+
+The permission fix adds a project-scoped `swarm` tool to AO's existing native
+stdio server. It supports prepare/start/get/stop/review for an active orchestrator's
+project. Worker-role calls and cross-project mutations are rejected; prepared handles
+are private to one tool host and capped. Compact responses omit duplicated packets.
+The lead uses this supported tool transport rather than sandboxed shell loopback.
+No general model network grant or sandbox bypass was added. Native telemetry
+confirms all three sessions used `gpt-5.6-luna`, low, workspace-write, network off.
+
+Focused MCP/lead race regressions pass and final lint reports zero issues. Existing
+source/fixture hashes and game status were preserved before this evidence update;
+the owned daemon exited 0 and its health endpoint/run file disappeared. Both
+workers were already observed stopped; redundant exit probes returned 409 and
+are retained as such. The first independent audit expected a post-probe snapshot;
+it was corrected to use the independent pre-probe stopped snapshot, without
+changing candidates/oracle. Prior blocked trial evidence remains intact.
+
+[Sanitized result](evidence/lead-bridge-confirmation.json). Raw private local archive:
+`outputs/swarm-build/lead-live-mcp-20261030`. Native usage is recorded per session;
+there is no comparative cost/savings claim. No production merge, publication,
+model substitution or replacement-worker run occurred.
+
+**Next gate:** try a separately authorized real-project task and strengthen review
+coverage/report validation and tool-host recovery. This confirmation establishes
+one complete lead-to-workers-to-review path, not general autonomous coding quality
+or adversarial containment. The publication entry above records repository status.
+
+## Lead live diagnostic — 30 October 2026
+
+**Result: blocked before worker execution.** One actual Luna/low AO lead read the
+frozen duration specification/tests, created and corrected its own two-task
+proposal in session artifacts, and stopped when its workspace-write sandbox
+rejected loopback access for `ao swarm prepare`. No workers launched and no lead
+review occurred. This is not an end-to-end pass.
+
+The coordinator subsequently submitted the unchanged lead-authored proposal for
+preparation only: full daemon validation passed. Native telemetry independently
+confirms `gpt-5.6-luna`, low effort, on-request/native auto_review, workspace-write
+and network disabled. Lead counters: 662,726 input (634,624 cached), 5,715 output,
+668,441 total; counters are not a billing estimate or savings result.
+
+An earlier setup request was rejected before any session because it supplied a
+worker-only request key on lead creation. Both that preflight and the actual
+trial are preserved. The actual trial had one lead, zero workers, no replacement
+models, no implementation fallback, and no permission bypass. Coordinator-only
+proposal validation is recorded separately from what the lead accomplished.
+
+Both owned daemon executions exited 0, their run files were removed, and the
+final health endpoint was absent. Implementation and fixture hashes and game
+status were unchanged before this evidence update. Local archive:
+`outputs/swarm-build/lead-live-20261030`, with `result.json` as the compact result.
+Raw native conversations and authentication state remain private and untracked.
+
+**Next gate:** connect the lead to its owned daemon through a supported,
+permission-aware mechanism while preserving worker sandbox boundaries, then
+perform a fresh live trial. Do not fix this by broadly disabling sandboxing or
+by having the coordinator launch workers on the lead's behalf.
+
+## Lead connection implementation — 30 October 2026
+
+Added `ao swarm proposal`, daemon-owned proposal preparation, optional execution
+through the existing run API, combined frozen-candidate review preparation, and
+AO orchestrator instructions for the full workflow. See [lead guide](LEAD_WORKFLOW.md).
+The builder derives source/context/tool hashes and preserves the lead's explicit
+model and behavioral decisions. Strict parsing and the existing supervised
+validator reject malformed, overlapping or incomplete proposals before launch.
+
+Review preparation creates a fresh combined directory and returns check argv and
+contracts; the lead performs actual checks through its session tools and retains
+its report. The daemon does not itself execute the check commands or record a
+verified acceptance verdict. Existing source and frozen candidates are preserved.
+
+**Validation:** full planning and supervised-service race suites passed, plus
+focused CLI/API/lead-instruction regressions and registered-command telemetry.
+Offline fixtures cover preparation, two fixture worker launches, request replay,
+combined candidates and tamper rejection. API/client regeneration, frontend type
+checking and six Python tests passed; final lint reports zero issues. An existing
+one-second parent-deadline fixture expired before both Git worktrees started under
+race instrumentation; its startup allowance is now five seconds, retaining all
+deadline/stop assertions. Earlier failed logs are preserved. No live model calls
+were used. Receipts are in `outputs/swarm-build/lead-*`.
+**Next gate:** run a fresh live lead-driven demonstration with explicitly selected
+lead/worker models and record actual review evidence. Do not count offline fixtures
+or prompt instructions as proof of live autonomous planning/review.
+
 ## Active launch work — 29 October 2026
 
 **GHL-01: candidate implementation and offline example complete.** The public

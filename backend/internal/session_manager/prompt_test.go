@@ -394,3 +394,12 @@ func TestBuildSystemPrompt_WorkerNativeReviewFollowsProjectPolicy(t *testing.T) 
 		t.Fatalf("a project with no remote has no PRs to review:\n%s", local)
 	}
 }
+
+func TestOrchestratorPraxisSwarmBridge(t *testing.T) {
+	prompt := orchestratorSystemPrompt(promptProject{})
+	for _, required := range []string{"ao swarm proposal", "ao swarm prepare --proposal", "--execute --request-id", "ao swarm review", "Do not merge, publish or automatically launch corrective model runs"} {
+		if !strings.Contains(prompt, required) {
+			t.Fatalf("missing lead workflow: %s", required)
+		}
+	}
+}

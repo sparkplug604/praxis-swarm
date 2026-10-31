@@ -1,0 +1,155 @@
+{
+  "status": "passed",
+  "profile": "lead-to-supervised-swarm-over-native-stdio-tools",
+  "run_id": "sao-2c719e99c2d86248509d21f5",
+  "lead_created_proposal": true,
+  "lead_validation_feedback_corrections": 2,
+  "workers": [
+    {
+      "task_id": "formatter",
+      "session_id": "lead-live-mcp-2",
+      "changed_files": [
+        "duration_formatter.py"
+      ],
+      "candidate_hash": "a3d5999272a41ab826d1bf98ec7c7800a544f12610262c75844b8fb125f2c148",
+      "started_at": "2026-10-31T01:50:45.440688Z",
+      "completed_at": "2026-10-31T01:50:57.874425Z"
+    },
+    {
+      "task_id": "parser",
+      "session_id": "lead-live-mcp-3",
+      "changed_files": [
+        "duration_parser.py"
+      ],
+      "candidate_hash": "1c10d47ed8ff5a3d8df620b218fad749b362118483ca3d6d2461c9a3f510c02c",
+      "started_at": "2026-10-31T01:50:45.809305Z",
+      "completed_at": "2026-10-31T01:50:58.678927Z"
+    }
+  ],
+  "worker_turn_overlap_seconds": 12.06512,
+  "lead_review_checks_covered": [
+    {
+      "task": "formatter",
+      "check": "formatter-type-check",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "formatter",
+      "check": "formatter-range-check",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-type-check",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-invalid-check",
+      "verified_actual_execution": true
+    }
+  ],
+  "independent_tests": [
+    {
+      "runtime": "Python 3.9.6",
+      "exit_code": 0
+    },
+    {
+      "runtime": "Python 3.14.3",
+      "exit_code": 0
+    }
+  ],
+  "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+  "oracle_source": "Unchanged prior GHL-03 independent evaluator",
+  "native_model_and_sandbox_verified_for_all_three": true,
+  "source_and_game_preserved": true,
+  "shutdown": {
+    "owned_pid": 81479,
+    "exit_code": 0,
+    "health_reachable": false,
+    "run_file_present": false
+  },
+  "usage_scope": "Native counters for three sessions; cached input is included in input. No measured billing cost, savings or speedup claim.",
+  "limits": [
+    "One Mac toy coding fixture; not general autonomous coding qualification",
+    "Worktrees and stdio tool attribution do not establish adversarial containment",
+    "Human/project acceptance remains distinct from model review and passing fixture checks",
+    "Native stdio tool has no general network or shell execution capability; model network sandbox stayed disabled"
+  ],
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "source_commit": "739bc2692dda6eb6849174a9b62e58cba4b7bcbd",
+  "requested_model": "gpt-5.6-luna",
+  "requested_effort": "low",
+  "session_telemetry": {
+    "lead-live-mcp-1": {
+      "role": "orchestrator",
+      "contexts": [
+        {
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "auto_review",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 802036,
+        "cached_input_tokens": 764672,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 9719,
+        "reasoning_output_tokens": 608,
+        "total_tokens": 811755
+      }
+    },
+    "lead-live-mcp-2": {
+      "role": "worker",
+      "contexts": [
+        {
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 110574,
+        "cached_input_tokens": 98432,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 873,
+        "reasoning_output_tokens": 96,
+        "total_tokens": 111447
+      }
+    },
+    "lead-live-mcp-3": {
+      "role": "worker",
+      "contexts": [
+        {
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 117997,
+        "cached_input_tokens": 103168,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1485,
+        "reasoning_output_tokens": 200,
+        "total_tokens": 119482
+      }
+    }
+  }
+}

@@ -202,3 +202,53 @@ func (w *swarmCancelWriter) Write(p []byte) (int, error) {
 	w.cancel()
 	return n, err
 }
+
+func TestLeadPrepareAndReviewTransport(t *testing.T) {
+	cfg := setConfigEnv(t)
+	dir := t.TempDir()
+	path := filepath.Join(dir, "proposal.json")
+	if err := os.WriteFile(path, []byte(`{"projectId":"fixture"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	submits := 0
+	reviews := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/swarm/prepare":
+			if r.Method != http.MethodPost {
+				t.Error(r.Method)
+			}
+			_, _ = io.WriteString(w, `{"plan":{"objective":"prepared"},"context":[],"packets":[]}`)
+		case "/api/v1/swarm/runs":
+			submits++
+			_, _ = io.WriteString(w, `{"id":"lead-run","status":"completed"}`)
+		case "/api/v1/swarm/runs/lead-run/review":
+			reviews++
+			if r.Method != http.MethodPost {
+				t.Error(r.Method)
+			}
+			_, _ = io.WriteString(w, `{"directory":"/scratch/review","checks":[]}`)
+		default:
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	defer srv.Close()
+	writeRunFileFor(t, cfg, srv)
+	deps := Deps{ProcessAlive: func(int) bool { return true }}
+	if _, _, err := executeCLI(t, deps, "swarm", "prepare", "--proposal", path); err != nil {
+		t.Fatal(err)
+	}
+	if submits != 0 {
+		t.Fatal("preview submitted workers")
+	}
+	if _, _, err := executeCLI(t, deps, "swarm", "prepare", "--proposal", path, "--execute", "--request-id", "lead-request"); err != nil {
+		t.Fatal(err)
+	}
+	if submits != 1 {
+		t.Fatal("execution did not submit exactly once")
+	}
+	out, _, err := executeCLI(t, deps, "swarm", "review", "lead-run")
+	if err != nil || !strings.Contains(out, "/scratch/review") || reviews != 1 {
+		t.Fatalf("%s %v", out, err)
+	}
+}

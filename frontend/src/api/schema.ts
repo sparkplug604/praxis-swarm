@@ -4261,6 +4261,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/swarm/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Build a lead proposal without launching */
+        post: operations["prepareLeadSwarm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/swarm/runs": {
         parameters: {
             query?: never;
@@ -4289,6 +4306,23 @@ export interface paths {
         get: operations["getSupervisedSwarmRun"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/swarm/runs/{runId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assemble captured candidates for lead review */
+        post: operations["reviewLeadSwarm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6060,6 +6094,108 @@ export interface components {
             selection: string;
             sourceRole: string;
         };
+        DomainSwarmAcceptance: {
+            checks: components["schemas"]["DomainSwarmAcceptanceCheck"][];
+            oracleId: string;
+        };
+        DomainSwarmAcceptanceCheck: {
+            command: string[];
+            errorRuleId?: string;
+            expectedExitCode: number;
+            expectedResult: string;
+            id: string;
+        };
+        DomainSwarmContextRef: {
+            id: string;
+            kind: string;
+            required: boolean;
+            selectors: components["schemas"]["DomainSwarmContextSelectors"];
+            sha256: string;
+        };
+        DomainSwarmContextSelectors: {
+            backends: string[];
+            paths: string[];
+            taskTypes: string[];
+        };
+        DomainSwarmDependency: {
+            taskId: string;
+            /** Format: int64 */
+            version: number;
+        };
+        DomainSwarmErrorRule: {
+            destination: string;
+            effect: string;
+            id: string;
+            signal: string;
+            value: string;
+            when: string;
+        };
+        DomainSwarmInterface: {
+            contract: string;
+            errorRuleIds: string[];
+            id: string;
+            ownership: string;
+        };
+        DomainSwarmPlan: {
+            budgetBucket: string;
+            /** Format: int64 */
+            maxActive: number;
+            objective: string;
+            projectId: string;
+            /** Format: int64 */
+            protocolVersion: number;
+            sourceCommit: string;
+            tasks: components["schemas"]["DomainSwarmTaskContract"][];
+            /** Format: int64 */
+            tokenLimit: number;
+            /** Format: int64 */
+            version: number;
+        };
+        DomainSwarmResource: {
+            key: string;
+            kind: string;
+            namespace: string;
+        };
+        DomainSwarmSelection: {
+            effort: string;
+            harness: string;
+            model: string;
+        };
+        DomainSwarmTaskContract: {
+            agent: components["schemas"]["DomainSwarmSelection"];
+            dependencies: components["schemas"]["DomainSwarmDependency"][];
+            id: string;
+            objective: string;
+            oracleHash: string;
+            /** Format: int64 */
+            reserveTokens: number;
+            resources: components["schemas"]["DomainSwarmResource"][];
+            role?: string;
+            /** Format: int64 */
+            version: number;
+            work?: components["schemas"]["DomainSwarmWorkSpec"];
+        };
+        DomainSwarmToolIdentity: {
+            name: string;
+            path: string;
+            sha256: string;
+            version: string;
+        };
+        DomainSwarmWorkSpec: {
+            acceptance: components["schemas"]["DomainSwarmAcceptance"];
+            context: components["schemas"]["DomainSwarmContextRef"][];
+            contextByteLimit: number;
+            errors: components["schemas"]["DomainSwarmErrorRule"][];
+            interfaces: components["schemas"]["DomainSwarmInterface"][];
+            nonGoals: string[];
+            onBlocked: string;
+            onComplete: string;
+            progressPath: string;
+            taskType: string;
+            tools: components["schemas"]["DomainSwarmToolIdentity"][];
+            /** Format: int64 */
+            version: number;
+        };
         EditConversationMessageRequest: {
             clientMessageId?: string;
             text: string;
@@ -6552,6 +6688,58 @@ export interface components {
             status: "needs_review" | "running" | "up_to_date" | "changes_requested" | "ineligible";
             targetSha: string;
             title: string;
+        };
+        PlanningLeadProposal: {
+            effort: string;
+            model: string;
+            objective: string;
+            projectId: string;
+            specification: string;
+            tasks: components["schemas"]["PlanningProposalTask"][];
+            /** Format: int64 */
+            tokenLimit: number;
+            tools: components["schemas"]["PlanningProposalTool"][];
+        };
+        PlanningOmittedContext: {
+            id: string;
+            reason: string;
+        };
+        PlanningPreparedProposal: {
+            context: components["schemas"]["PlanningSuppliedContext"][];
+            packets: components["schemas"]["PlanningSupervisedPacket"][];
+            plan: components["schemas"]["DomainSwarmPlan"];
+        };
+        PlanningProposalTask: {
+            acceptance: components["schemas"]["DomainSwarmAcceptance"];
+            errors: components["schemas"]["DomainSwarmErrorRule"][];
+            id: string;
+            interfaces: components["schemas"]["DomainSwarmInterface"][];
+            nonGoals: string[];
+            objective: string;
+            paths: string[];
+            progressPath: string;
+        };
+        PlanningProposalTool: {
+            name: string;
+            path: string;
+            version: string;
+        };
+        PlanningSupervisedPacket: {
+            byteCount: number;
+            contractHash: string;
+            markdown: string;
+            omitted: components["schemas"]["PlanningOmittedContext"][];
+            planHash: string;
+            profile: string;
+            requested: components["schemas"]["DomainSwarmSelection"];
+            runId: string;
+            sha256: string;
+            sourceCommit: string;
+            taskId: string;
+        };
+        PlanningSuppliedContext: {
+            body: string;
+            id: string;
         };
         PrepareTaskResponse: {
             ok: boolean;
@@ -7721,6 +7909,50 @@ export interface components {
             /** @description Review verdict: approved or changes_requested. */
             verdict: string;
         };
+        SupervisedObservation: {
+            /** Format: date-time */
+            completedAt?: null | string;
+            controller: string;
+            effort?: string;
+            model?: string;
+            modelEvidence?: string;
+            /** Format: date-time */
+            observedAt: string;
+            promptBytes?: number;
+            promptEvidence?: string;
+            providerTurnId?: string;
+            /** Format: date-time */
+            startedAt?: null | string;
+            systemPromptBytes?: number;
+            turnState: string;
+            usage?: unknown;
+        };
+        SupervisedReviewBundle: {
+            checks: components["schemas"]["DomainSwarmAcceptanceCheck"][];
+            /** Format: date-time */
+            createdAt: string;
+            directory: string;
+            instructions: string;
+            run: components["schemas"]["SupervisedRun"];
+        };
+        SupervisedRun: {
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            deadlineAt: string;
+            errors: string[];
+            id: string;
+            limits: string[];
+            plan: components["schemas"]["DomainSwarmPlan"];
+            profile: string;
+            requestHash: string;
+            requestId: string;
+            sourcePath: string;
+            sourceSnapshot: string;
+            sourceUnchanged: boolean;
+            status: string;
+            tasks: components["schemas"]["SupervisedTask"][];
+        };
         SupervisedSwarmContextInput: {
             body: string;
             id: string;
@@ -7769,6 +8001,21 @@ export interface components {
             id: string;
             observation: components["schemas"]["SupervisedSwarmObservationResponse"];
             packet: unknown;
+            requestId: string;
+            sessionId?: string;
+            snapshotHash?: string;
+            snapshotPath?: string;
+            status: string;
+            workspacePath?: string;
+        };
+        SupervisedTask: {
+            branch: string;
+            candidateHash?: string;
+            diffPath?: string;
+            error?: string;
+            id: string;
+            observation: components["schemas"]["SupervisedObservation"];
+            packet: components["schemas"]["PlanningSupervisedPacket"];
             requestId: string;
             sessionId?: string;
             snapshotHash?: string;
@@ -23918,6 +24165,84 @@ export interface operations {
             };
         };
     };
+    prepareLeadSwarm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanningLeadProposal"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanningPreparedProposal"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
     startSupervisedSwarmRun: {
         parameters: {
             query?: never;
@@ -24014,6 +24339,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupervisedSwarmRunResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    reviewLeadSwarm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupervisedReviewBundle"];
                 };
             };
             /** @description Bad Request */

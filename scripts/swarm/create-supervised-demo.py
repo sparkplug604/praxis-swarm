@@ -316,12 +316,29 @@ def generate(output_dir, project_id="ghl03-demo", model="gpt-5.6-luna", effort="
             "objective": "Implement and independently review two bounded duration helpers in supervised AO sessions.",
             "budgetBucket": "supervised-demo-advisory", "tokenLimit": 600000, "maxActive": 2,
             "tasks": [task_contract(name, tool, model, effort, refs, files) for name in ("parser", "formatter")]}
+    # A lead supplies decisions; the daemon builder derives hashes and source facts.
+    proposal = {"projectId": project_id, "objective": plan["objective"],
+                "specification": CONTRACT, "model": model, "effort": effort,
+                "tokenLimit": plan["tokenLimit"],
+                "tools": [{key: tool[key] for key in ("name", "path", "version")}], "tasks": []}
+    for task in plan["tasks"]:
+        work = task["work"]
+        acceptance = json.loads(json.dumps(work["acceptance"]))
+        for check in acceptance["checks"]:
+            check["command"][0] = tool["name"]
+        proposal["tasks"].append({"id": task["id"], "objective": task["objective"],
+                                  "paths": [resource["key"] for resource in task["resources"]],
+                                  "nonGoals": work["nonGoals"], "interfaces": work["interfaces"],
+                                  "errors": work["errors"], "acceptance": acceptance,
+                                  "progressPath": work["progressPath"]})
+    with (output / "proposal.json").open("x", encoding="utf-8", newline="\n") as stream:
+        stream.write(json_text(proposal))
     for name, value in (("plan.json", plan), ("context.json", contexts), ("source-manifest.json", manifest)):
         with (output / name).open("x", encoding="utf-8", newline="\n") as stream:
             stream.write(json_text(value))
     # Keep one stable request key per generated directory, not per invocation.
     request_id = "duration-demo-" + digest(str(output).encode("utf-8"))[:20]
-    return {"repository": str(repository), "plan": str(output / "plan.json"),
+    return {"repository": str(repository), "proposal": str(output / "proposal.json"), "plan": str(output / "plan.json"),
             "context": str(output / "context.json"), "sourceCommit": commit,
             "projectAddCommand": shlex.join(["ao", "project", "add", "--path", str(repository), "--id", project_id]),
             "swarmRunCommand": shlex.join(["ao", "swarm", "run", "--plan", str(output / "plan.json"), "--context", str(output / "context.json"), "--request-id", request_id, "--timeout", "240"]),

@@ -1,0 +1,188 @@
+{
+  "status": "passed",
+  "profile": "lead-to-supervised-swarm-over-native-stdio-tools",
+  "run_id": "sao-de66abc27c3efa6701421373",
+  "lead_created_proposal": true,
+  "lead_validation_feedback_corrections": 0,
+  "workers": [
+    {
+      "task_id": "formatter",
+      "session_id": "lead-sol-luna-2",
+      "changed_files": [
+        "duration_formatter.py"
+      ],
+      "candidate_hash": "50c1d69003ecff1d3b8c30eeca2176490c6f75d916278ac730017d46d3e1ca50",
+      "started_at": "2026-10-31T01:58:19.98216Z",
+      "completed_at": "2026-10-31T01:58:40.053919Z"
+    },
+    {
+      "task_id": "parser",
+      "session_id": "lead-sol-luna-3",
+      "changed_files": [
+        "duration_parser.py"
+      ],
+      "candidate_hash": "8095bd50007eb3a5b96b8d6e31f1bc6edcb2aabba3b0611b5c456a3946726f2a",
+      "started_at": "2026-10-31T01:58:20.358652Z",
+      "completed_at": "2026-10-31T01:58:38.200316Z"
+    }
+  ],
+  "worker_turn_overlap_seconds": 17.841664,
+  "lead_review_checks_covered": [
+    {
+      "task": "formatter",
+      "check": "formatter-suite",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "formatter",
+      "check": "formatter-type-error",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "formatter",
+      "check": "formatter-range-error",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "formatter",
+      "check": "formatter-huge-int-error",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-suite",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-type-error",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-syntax-range-error",
+      "verified_actual_execution": true
+    },
+    {
+      "task": "parser",
+      "check": "parser-huge-text-error",
+      "verified_actual_execution": true
+    }
+  ],
+  "independent_tests": [
+    {
+      "runtime": "Python 3.9.6",
+      "exit_code": 0
+    },
+    {
+      "runtime": "Python 3.14.3",
+      "exit_code": 0
+    }
+  ],
+  "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+  "oracle_source": "Unchanged prior GHL-03 independent evaluator",
+  "native_model_and_sandbox_verified_for_all_three": true,
+  "source_and_game_preserved": true,
+  "shutdown": {
+    "owned_pid": 83741,
+    "exit_code": 0,
+    "health_reachable": false,
+    "run_file_present": false
+  },
+  "usage_scope": "Native counters for three sessions; cached input is included in input. No measured billing cost, savings or speedup claim.",
+  "limits": [
+    "One Mac toy coding fixture; not general autonomous coding qualification",
+    "Worktrees and stdio tool attribution do not establish adversarial containment",
+    "Human/project acceptance remains distinct from model review and passing fixture checks",
+    "Native stdio tool has no general network or shell execution capability; model network sandbox stayed disabled"
+  ],
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "lead_model": "gpt-6.1-sol",
+  "lead_effort": "high",
+  "worker_model": "gpt-5.6-luna",
+  "worker_effort": "low",
+  "source_commit": "144e539dff44835c34f0ffba77e7b71c3fa99f2b",
+  "session_telemetry": {
+    "lead-sol-luna-1": {
+      "role": "orchestrator",
+      "contexts": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "high",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "auto_review",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 497070,
+        "cached_input_tokens": 466048,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6579,
+        "reasoning_output_tokens": 1587,
+        "total_tokens": 503649
+      }
+    },
+    "lead-sol-luna-2": {
+      "role": "worker",
+      "contexts": [
+        {
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 154208,
+        "cached_input_tokens": 137216,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1283,
+        "reasoning_output_tokens": 229,
+        "total_tokens": 155491
+      }
+    },
+    "lead-sol-luna-3": {
+      "role": "worker",
+      "contexts": [
+        {
+          "model": "gpt-5.6-luna",
+          "effort": "low",
+          "approval_policy": "on-request",
+          "approvals_reviewer": "user",
+          "sandbox": {
+            "type": "workspace-write",
+            "network_access": false
+          }
+        }
+      ],
+      "usage": {
+        "input_tokens": 122314,
+        "cached_input_tokens": 106880,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1497,
+        "reasoning_output_tokens": 296,
+        "total_tokens": 123811
+      }
+    }
+  },
+  "comparison_controls": {
+    "fixture_file_hashes_identical": true,
+    "binary_identical": true,
+    "prior_run": "sao-2c719e99c2d86248509d21f5",
+    "lead_changed_from": "gpt-5.6-luna/low",
+    "lead_changed_to": "gpt-6.1-sol/high",
+    "workers_unchanged": "gpt-5.6-luna/low",
+    "claim_limit": "One repeat of a toy fixture; not a controlled quality, cost or speed benchmark"
+  },
+  "preflight": "The catalog probe listed no models but permitted direct selection. No session was created before the corrected preflight; native telemetry verifies actual requested IDs.",
+  "reproduction_directory": "sol-luna-demo"
+}

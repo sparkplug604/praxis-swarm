@@ -127,3 +127,34 @@ func TestSupervisedSwarmAPIErrorEnvelopes(t *testing.T) {
 		}
 	}
 }
+
+func (f *fakeSupervisedManager) Prepare(_ context.Context, p planning.LeadProposal) (planning.PreparedProposal, error) {
+	f.action = "prepare"
+	f.calls++
+	return planning.PreparedProposal{Plan: domain.SwarmPlan{Objective: p.Objective}}, f.err
+}
+func (f *fakeSupervisedManager) Review(_ context.Context, id string) (supervised.ReviewBundle, error) {
+	f.action = "review"
+	f.id = id
+	f.calls++
+	return supervised.ReviewBundle{Directory: "/scratch/combined"}, f.err
+}
+func TestLeadSwarmEndpoints(t *testing.T) {
+	svc := &fakeSupervisedManager{}
+	srv := supervisedServer(t, svc)
+	body, status, _ := doRequest(t, srv, http.MethodPost, "/api/v1/swarm/prepare", `{"projectId":"fixture","objective":"lead goal"}`)
+	if status != http.StatusOK || svc.action != "prepare" || !strings.Contains(string(body), "lead goal") {
+		t.Fatalf("%d %s", status, body)
+	}
+	before := svc.calls
+	for _, raw := range []string{`{"projectId":"one","projectId":"two"}`, `{"unexpected":1}`, `{"projectId":null}`, `{} {}`} {
+		_, status, _ := doRequest(t, srv, http.MethodPost, "/api/v1/swarm/prepare", raw)
+		if status != http.StatusBadRequest || svc.calls != before {
+			t.Fatalf("invalid proposal reached service: %s %d", raw, status)
+		}
+	}
+	body, status, _ = doRequest(t, srv, http.MethodPost, "/api/v1/swarm/runs/run-1/review", "")
+	if status != http.StatusOK || svc.action != "review" || svc.id != "run-1" || !strings.Contains(string(body), "/scratch/combined") {
+		t.Fatalf("%d %s", status, body)
+	}
+}

@@ -6,7 +6,8 @@ the controllers after their turns, and retains candidate files, hashes and
 tracked-file patches for human review. It does not merge changes or execute an
 independent acceptance test automatically. The [corrected live confirmation](SUPERVISED_WORKFLOW_RESULT.md)
 completed both workers on one Mac; the coordinator independently tested the
-frozen code afterward. Publication and broader runtime qualification remain open.
+frozen code afterward. For lead-driven planning and review, use the [AI lead workflow](LEAD_WORKFLOW.md).
+Broader runtime qualification remains open.
 
 ## Prerequisites and first run
 

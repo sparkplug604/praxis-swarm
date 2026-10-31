@@ -80,6 +80,7 @@ func newSwarmCommand(c *commandContext) *cobra.Command {
 	run.Flags().IntVar(&timeout, "timeout", 240, "Daemon-owned run deadline in seconds (10–600)")
 	run.Flags().BoolVar(&wait, "wait", true, "Wait for the final report; interrupting does not stop the run")
 	cmd.AddCommand(run)
+	cmd.AddCommand(newSwarmPrepareCommand(c), newSwarmReviewCommand(c), newSwarmProposalCommand())
 	for _, action := range []string{"get", "stop"} {
 		cmd.AddCommand(&cobra.Command{Use: action + " ID", Short: action + " a supervised run and print its JSON report", Args: func(_ *cobra.Command, args []string) error {
 			if len(args) != 1 || strings.TrimSpace(args[0]) == "" || strings.ContainsAny(args[0], "/?#") {
@@ -201,3 +202,78 @@ func swarmRequestError(ctx context.Context, err error, id, requestID string) err
 	}
 	return err
 }
+
+func newSwarmPrepareCommand(c *commandContext) *cobra.Command {
+	var file, requestID string
+	var execute bool
+	var timeout int
+	cmd := &cobra.Command{Use: "prepare", Short: "Build and validate a lead proposal; optionally execute its two assignments", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		if file == "" || (execute && strings.TrimSpace(requestID) == "") {
+			return usageError{errors.New("--proposal is required; --execute also requires --request-id")}
+		}
+		if timeout < 10 || timeout > 600 {
+			return usageError{errors.New("--timeout must be between 10 and 600 seconds")}
+		}
+		raw, err := readSwarmInput(file)
+		if err != nil {
+			return usageError{err}
+		}
+		if !json.Valid(raw) {
+			return usageError{errors.New("proposal must be valid JSON")}
+		}
+		var prepared struct {
+			Plan    json.RawMessage     `json:"plan"`
+			Context []swarmContextInput `json:"context"`
+			Packets json.RawMessage     `json:"packets"`
+		}
+		if err := c.postJSON(cmd.Context(), "swarm/prepare", json.RawMessage(raw), &prepared); err != nil {
+			return err
+		}
+		if !execute {
+			return writeJSON(cmd.OutOrStdout(), prepared)
+		}
+		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		defer cancel()
+		return c.swarmRun(ctx, swarmStartRequest{requestID, prepared.Plan, prepared.Context, timeout}, true)
+	}}
+	cmd.Flags().StringVar(&file, "proposal", "", "Lead proposal JSON file")
+	cmd.Flags().BoolVar(&execute, "execute", false, "Start real workers after successful preparation (consumes model usage)")
+	cmd.Flags().StringVar(&requestID, "request-id", "", "Stable run identity; use get/run to recover an uncertain submission")
+	cmd.Flags().IntVar(&timeout, "timeout", 240, "Daemon-owned run deadline in seconds")
+	return cmd
+}
+func newSwarmReviewCommand(c *commandContext) *cobra.Command {
+	return &cobra.Command{Use: "review ID", Short: "Assemble frozen worker changes and check instructions for lead review", Args: cobra.ExactArgs(1), RunE: func(cmd *cobra.Command, args []string) error {
+		if strings.TrimSpace(args[0]) == "" || strings.ContainsAny(args[0], "/?#") {
+			return usageError{errors.New("invalid swarm run ID")}
+		}
+		var raw json.RawMessage
+		if err := c.postJSON(cmd.Context(), "swarm/runs/"+url.PathEscape(args[0])+"/review", nil, &raw); err != nil {
+			return err
+		}
+		return writeJSON(cmd.OutOrStdout(), raw)
+	}}
+}
+
+func newSwarmProposalCommand() *cobra.Command {
+	return &cobra.Command{Use: "proposal", Short: "Print the lead proposal format and semantics", Args: cobra.NoArgs, RunE: func(cmd *cobra.Command, _ []string) error {
+		_, err := fmt.Fprintln(cmd.OutOrStdout(), swarmProposalGuide)
+		return err
+	}}
+}
+
+const swarmProposalGuide = `Lead proposal JSON (replace every example with project-specific decisions):
+{
+ "projectId":"registered-project", "objective":"User goal", "specification":"Shared behavioral specification",
+ "model":"explicit-user-selected-model", "effort":"low", "tokenLimit":600000,
+ "tools":[{"name":"python","path":"/absolute/canonical/python3","version":"supplied-version-label"}],
+ "tasks":[
+  {"id":"parser","objective":"Implement the agreed parser","paths":["parser.py"],
+   "nonGoals":["Do not edit tests or the other worker's files"],
+   "interfaces":[{"id":"parse","contract":"Exact signature and behavior","ownership":"parser.py","errorRuleIds":["invalid"]}],
+   "errors":[{"id":"invalid","when":"Describe invalid input","signal":"throw","value":"Exact exception and message","destination":"unchanged","effect":"Reject before mutation"}],
+   "acceptance":{"oracleId":"parser-tests","checks":[{"id":"invalid-check","command":["python","-B","-m","unittest","tests.test_parser"],"expectedExitCode":0,"expectedResult":"Describe exact success criteria","errorRuleId":"invalid"}]},
+   "progressPath":"PROGRESS.md"}
+ ]
+}
+Add a second independent task with different ID and disjoint paths. Name declared tools in check command[0]; the daemon resolves their canonical paths and hashes. Version labels are supplied metadata, not executed version probes. Required: concrete objectives, non-goals, interfaces and exact errors; every error rule must be referenced by an interface and a check. Checks specify acceptance, not proof of execution. tokenLimit is advisory. Preparation derives sourceCommit and source manifests; hashes seal the supplied specifications, not their correctness. It executes no check commands or models. Submit with ao swarm prepare --proposal FILE; add --execute --request-id STABLE_ID only for authorized real worker execution. Review completed results with ao swarm review RUN_ID.`

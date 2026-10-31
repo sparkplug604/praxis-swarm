@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -23,6 +24,8 @@ type SupervisedSwarmController struct{ Svc supervised.Manager }
 // Register mounts the supervised run creation, observation and stop routes.
 func (c *SupervisedSwarmController) Register(r chi.Router) {
 	r.Post("/swarm/runs", c.start)
+	r.Post("/swarm/prepare", c.prepare)
+	r.Post("/swarm/runs/{runId}/review", c.review)
 	r.Get("/swarm/runs/{runId}", c.get)
 	r.Post("/swarm/runs/{runId}/stop", c.stop)
 }
@@ -44,11 +47,11 @@ func (c *SupervisedSwarmController) start(w http.ResponseWriter, r *http.Request
 		writeSupervisedJSONError(w, r, err)
 		return
 	}
-	context := make([]planning.SuppliedContext, len(input.Context))
+	suppliedContext := make([]planning.SuppliedContext, len(input.Context))
 	for i, supplied := range input.Context {
-		context[i] = planning.SuppliedContext{ID: supplied.ID, Body: supplied.Body}
+		suppliedContext[i] = planning.SuppliedContext{ID: supplied.ID, Body: supplied.Body}
 	}
-	run, err := c.Svc.Start(r.Context(), supervised.StartInput{RequestID: input.RequestID, Plan: input.Plan, Context: context, TimeoutSeconds: input.TimeoutSeconds})
+	run, err := c.Svc.Start(r.Context(), supervised.StartInput{RequestID: input.RequestID, Plan: input.Plan, Context: suppliedContext, TimeoutSeconds: input.TimeoutSeconds})
 	c.respond(w, r, run, err, http.StatusAccepted)
 }
 
@@ -117,4 +120,48 @@ func (c *SupervisedSwarmController) respond(w http.ResponseWriter, r *http.Reque
 		out.Limits = []string{}
 	}
 	envelope.WriteJSON(w, status, out)
+}
+
+// prepare validates a lead proposal and returns execution inputs without launching workers.
+func (c *SupervisedSwarmController) prepare(w http.ResponseWriter, r *http.Request) {
+	svc, ok := c.Svc.(interface {
+		Prepare(context.Context, planning.LeadProposal) (planning.PreparedProposal, error)
+	})
+	if !ok {
+		apispec.NotImplemented(w, r, "POST", "/api/v1/swarm/prepare")
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
+	raw, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeSupervisedJSONError(w, r, err)
+		return
+	}
+	proposal, err := planning.ParseProposal(raw)
+	if err != nil {
+		c.respond(w, r, supervised.Run{}, err, http.StatusBadRequest)
+		return
+	}
+	result, err := svc.Prepare(r.Context(), proposal)
+	if err != nil {
+		c.respond(w, r, supervised.Run{}, err, http.StatusBadRequest)
+		return
+	}
+	envelope.WriteJSON(w, http.StatusOK, result)
+}
+
+func (c *SupervisedSwarmController) review(w http.ResponseWriter, r *http.Request) {
+	svc, ok := c.Svc.(interface {
+		Review(context.Context, string) (supervised.ReviewBundle, error)
+	})
+	if !ok {
+		apispec.NotImplemented(w, r, "POST", "/api/v1/swarm/runs/{runId}/review")
+		return
+	}
+	result, err := svc.Review(r.Context(), chi.URLParam(r, "runId"))
+	if err != nil {
+		c.respond(w, r, supervised.Run{}, err, http.StatusBadRequest)
+		return
+	}
+	envelope.WriteJSON(w, http.StatusOK, result)
 }

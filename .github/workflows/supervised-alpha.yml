@@ -95,7 +95,7 @@ jobs:
           go -C backend test -race -count=1 -p 1 -timeout=15m ./internal/cli \
             2>&1 | tee "$RUNNER_TEMP/praxis-alpha/logs/cli-tests.log"
           go -C backend test -race -count=1 -p 1 -timeout=15m -v \
-            -run '^(Test(Swarm|Supervised|Pinned)|TestMigrationVersionLedger$)' \
+            -run '^(Test(Swarm|Supervised|Pinned|Lead)|TestOrchestratorPraxisSwarmBridge$|TestMigrationVersionLedger$)' \
             ./internal/domain ./internal/daemon \
             ./internal/httpd/controllers ./internal/session_manager \
             ./internal/storage/sqlite ./internal/storage/sqlite/store \
