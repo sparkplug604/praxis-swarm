@@ -1,0 +1,353 @@
+{
+  "date": "2026-10-30",
+  "platform": "macOS arm64",
+  "implementation_commit": "a405d7abcfd2e9b66ed09fd1a14489cef093f164",
+  "walkthroughs": [
+    {
+      "status": "workflow_completed_and_audited",
+      "path": "terminal",
+      "run_id": "sao-788f347a9a6758ab4ad05171",
+      "source_commit": "a405d7abcfd2e9b66ed09fd1a14489cef093f164",
+      "lead_model": "gpt-6.1-sol",
+      "lead_effort": "high",
+      "worker_model": "gpt-5.6-luna",
+      "worker_effort": "low",
+      "session_count": 3,
+      "native_settings_verified": true,
+      "lead_native_actions": [
+        {
+          "action": "prepare",
+          "status": "completed"
+        },
+        {
+          "action": "start",
+          "status": "completed"
+        },
+        {
+          "action": "get",
+          "status": "completed"
+        },
+        {
+          "action": "review",
+          "status": "completed"
+        }
+      ],
+      "workers": [
+        {
+          "id": "formatter",
+          "changed_files": [
+            "duration_formatter.py"
+          ],
+          "candidate_hash": "3e87696a3ffda037442f8cd0fdd4ccfb1bea1311e94faf9bb152642778b06450"
+        },
+        {
+          "id": "parser",
+          "changed_files": [
+            "duration_parser.py"
+          ],
+          "candidate_hash": "1f4049f7b790df6b9cd46ff10084713a64dfc83938fa0066222cea9aa00f72e3"
+        }
+      ],
+      "worker_turn_overlap_seconds": 18.415673,
+      "independent_checks": [
+        {
+          "runtime": "Python 3.9.6",
+          "tests": 13,
+          "exit_code": 0
+        },
+        {
+          "runtime": "Python 3.14.3",
+          "tests": 13,
+          "exit_code": 0
+        }
+      ],
+      "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+      "source_preserved": true,
+      "clone_clean": true,
+      "shutdown": {
+        "document_commands_exit_code": 0,
+        "health_reachable": false,
+        "run_file_present": false
+      },
+      "lead_review_outcome": "changes_required",
+      "lead_declared_checks": [
+        {
+          "id": "formatter-suite",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "formatter-type-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "formatter-range-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "formatter-huge-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-suite",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-type-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-invalid-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-huge-check",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        }
+      ],
+      "lead_discovery_tests": 10,
+      "supplemental_boundary_reproduction": [
+        {
+          "runtime": "python39",
+          "exit_code": 1,
+          "observations": [
+            {
+              "input": "123456:00:0",
+              "expected": "ValueError: invalid duration",
+              "actual": "IndexError: string index out of range"
+            },
+            {
+              "input": "12345:00:00",
+              "expected": "ValueError: invalid duration",
+              "actual": "IndexError: string index out of range"
+            }
+          ]
+        },
+        {
+          "runtime": "python314",
+          "exit_code": 1,
+          "observations": [
+            {
+              "input": "123456:00:0",
+              "expected": "ValueError: invalid duration",
+              "actual": "IndexError: string index out of range"
+            },
+            {
+              "input": "12345:00:00",
+              "expected": "ValueError: invalid duration",
+              "actual": "IndexError: string index out of range"
+            }
+          ]
+        }
+      ],
+      "candidate_accepted_by_lead": false,
+      "lead_execution_audit": "all_declared_check_argv/cwd/exits/logs_matched_successful_native_shell_execution",
+      "native_usage": {
+        "orchestrator": {
+          "input_tokens": 533887,
+          "cached_input_tokens": 476800,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 6916,
+          "reasoning_output_tokens": 1209,
+          "total_tokens": 540803
+        },
+        "worker-first-swarm-2": {
+          "input_tokens": 171982,
+          "cached_input_tokens": 155904,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1542,
+          "reasoning_output_tokens": 343,
+          "total_tokens": 173524
+        },
+        "worker-first-swarm-3": {
+          "input_tokens": 213515,
+          "cached_input_tokens": 193920,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 2478,
+          "reasoning_output_tokens": 535,
+          "total_tokens": 215993
+        }
+      }
+    },
+    {
+      "status": "workflow_completed_and_audited",
+      "path": "codex",
+      "run_id": "sao-788f347a9a6758ab4ad05171",
+      "source_commit": "a405d7abcfd2e9b66ed09fd1a14489cef093f164",
+      "lead_model": "gpt-6.1-sol",
+      "lead_effort": "high",
+      "worker_model": "gpt-5.6-luna",
+      "worker_effort": "low",
+      "session_count": 3,
+      "native_settings_verified": true,
+      "lead_native_actions": [
+        {
+          "action": "prepare_result_observed_arguments_truncated",
+          "status": "completed"
+        },
+        {
+          "action": "start",
+          "status": "completed"
+        },
+        {
+          "action": "get",
+          "status": "completed"
+        },
+        {
+          "action": "review",
+          "status": "completed"
+        }
+      ],
+      "workers": [
+        {
+          "id": "formatter",
+          "changed_files": [
+            "duration_formatter.py"
+          ],
+          "candidate_hash": "3e87696a3ffda037442f8cd0fdd4ccfb1bea1311e94faf9bb152642778b06450"
+        },
+        {
+          "id": "parser",
+          "changed_files": [
+            "duration_parser.py"
+          ],
+          "candidate_hash": "7fee99161ca7fd916503bdbb3b37e81091f301cf830871f27e109ac13f3bec16"
+        }
+      ],
+      "worker_turn_overlap_seconds": 8.982206,
+      "independent_checks": [
+        {
+          "runtime": "Python 3.9.6",
+          "tests": 13,
+          "exit_code": 0
+        },
+        {
+          "runtime": "Python 3.14.3",
+          "tests": 13,
+          "exit_code": 0
+        }
+      ],
+      "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+      "source_preserved": true,
+      "clone_clean": true,
+      "shutdown": {
+        "document_commands_exit_code": 0,
+        "health_reachable": false,
+        "run_file_present": false
+      },
+      "lead_review_outcome": "reviewed_pass_for_frozen_contract_and_named_checks",
+      "lead_declared_checks": [
+        {
+          "id": "formatter-suite",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "formatter-type-error",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "formatter-range-and-huge",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-suite",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-type-error",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        },
+        {
+          "id": "parser-invalid-and-huge",
+          "exit_code": 0,
+          "actual_execution_verified": true
+        }
+      ],
+      "lead_discovery_tests": 10,
+      "supplemental_boundary_reproduction": [
+        {
+          "runtime": "python39",
+          "exit_code": 0,
+          "observations": [
+            {
+              "input": "123456:00:0",
+              "expected": "ValueError: invalid duration",
+              "actual": "ValueError: invalid duration"
+            },
+            {
+              "input": "12345:00:00",
+              "expected": "ValueError: invalid duration",
+              "actual": "ValueError: invalid duration"
+            }
+          ]
+        },
+        {
+          "runtime": "python314",
+          "exit_code": 0,
+          "observations": [
+            {
+              "input": "123456:00:0",
+              "expected": "ValueError: invalid duration",
+              "actual": "ValueError: invalid duration"
+            },
+            {
+              "input": "12345:00:00",
+              "expected": "ValueError: invalid duration",
+              "actual": "ValueError: invalid duration"
+            }
+          ]
+        }
+      ],
+      "candidate_accepted_by_lead": true,
+      "lead_execution_audit": "all_declared_check_argv/cwd/exits/logs_matched_successful_native_shell_execution",
+      "native_usage": {
+        "orchestrator": {
+          "input_tokens": 521864,
+          "cached_input_tokens": 486912,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 8189,
+          "reasoning_output_tokens": 1683,
+          "total_tokens": 530053
+        },
+        "worker-first-swarm-2": {
+          "input_tokens": 123843,
+          "cached_input_tokens": 108032,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1641,
+          "reasoning_output_tokens": 199,
+          "total_tokens": 125484
+        },
+        "worker-first-swarm-3": {
+          "input_tokens": 98840,
+          "cached_input_tokens": 83328,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 1082,
+          "reasoning_output_tokens": 160,
+          "total_tokens": 99922
+        }
+      }
+    }
+  ],
+  "six_distinct_native_provider_sessions": true,
+  "preserved_existing_implementation_and_game": true,
+  "natural_language_test_scope": "The existing Codex desktop chat consumed the guide prompt and performed setup; a fresh managed Sol/high lead and two fresh Luna/low workers executed. This was not a blind new-chat usability study.",
+  "interpretation": "Both setup/execution/review/cleanup paths completed. Terminal candidate held for repair; Codex-assisted candidate passed observed checks. Thirteen pre-existing independent tests passing did not cover the discovered truncated-input defect.",
+  "limits": [
+    "One small Mac fixture, not cross-platform or general coding qualification.",
+    "Run IDs are daemon-scoped; identical stable request IDs in isolated stores can repeat.",
+    "No automatic correction, merge, publication of candidates or model substitution.",
+    "Raw transcripts and local paths remain private. Native usage counters are not billing measurements."
+  ]
+}

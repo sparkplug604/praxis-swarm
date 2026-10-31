@@ -5,6 +5,32 @@ The [GitHub launch plan](GITHUB_LAUNCH_PLAN.md) defines the current first-releas
 sequence; the [full build plan](BUILD_PLAN.md) retains the wider requirements.
 Older game/Praxis handoffs and experimental boards do not override this record.
 
+## First-project walkthroughs — 30 October 2026
+
+Added [Codex](GET_STARTED_CODEX.md) and [terminal](GET_STARTED_TERMINAL.md)
+walkthroughs, linked from the README and the lead-workflow landing page. The
+previous technical guide is preserved as [LEAD_REFERENCE.md](LEAD_REFERENCE.md).
+Both paths were executed from fresh public clones using separately isolated data,
+Sol/high leads and two Luna/low workers each. Literal terminal command blocks,
+actual lead checks, six distinct native provider sessions, scoped captures,
+source preservation and owned-daemon cleanup were verified. The Codex setup was
+performed by the existing desktop chat consuming the request; no blind new-chat
+usability result is claimed.
+
+Both candidates passed 10 supplied tests and the unchanged 13-test independent
+suite on Python 3.9.6/3.14.3. The terminal lead additionally caught a truncated-input
+parser defect and marked the candidate **changes required**; independent
+reproduction confirmed it on both runtimes. The Codex-assisted candidate passed
+review and that supplemental check. Candidates were preserved without correction,
+replacement workers or merge. The guides now explain this review outcome.
+[Verification details and sanitized evidence](evidence/walkthrough-verification.md).
+
+All eight hosted workflows for implementation commit `f13fe4385` have now completed
+successfully, including the formerly pending Go, Frontend and Supervised alpha
+jobs. This documentation change leaves implementation and the existing alpha tag
+unchanged. Further fixture work would scope a correction to the retained parser
+candidate; broader task coverage remains open.
+
 ## Lead workflow publication — 30 October 2026
 
 Published the reviewed README, lead proposal/builder, execution and review bridge,

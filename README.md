@@ -116,7 +116,9 @@ A separate trial also demonstrated Luna/low acting as the lead. These are succes
 
 ## Get started
 
-- [Use the AI lead workflow](docs/swarm/LEAD_WORKFLOW.md)
+- [Start your first project with Codex](docs/swarm/GET_STARTED_CODEX.md)
+- [Start your first project in the terminal](docs/swarm/GET_STARTED_TERMINAL.md)
+- [AI lead workflow reference](docs/swarm/LEAD_REFERENCE.md)
 - [Run the supervised CLI workflow](docs/swarm/SUPERVISED_WORKFLOW.md)
 - [Explore the offline coordination demo](docs/swarm/QUICKSTART.md)
 - [Read the demonstration evidence](docs/swarm/evidence/lead-sol-luna-confirmation.json)
