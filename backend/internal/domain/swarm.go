@@ -67,6 +67,7 @@ type SwarmTaskContract struct {
 
 // SwarmPlan defines a versioned task graph and its shared admission limits.
 type SwarmPlan struct {
+	Brief           *SwarmBriefRef      `json:"brief,omitempty"`
 	ProtocolVersion int64               `json:"protocolVersion"`
 	Version         int64               `json:"version"`
 	ProjectID       ProjectID           `json:"projectId"`
@@ -229,6 +230,9 @@ func NormalizeSwarmPlan(input SwarmPlan) (SwarmPlan, error) {
 		!SwarmValidID(p.BudgetBucket) || p.TokenLimit <= 0 || p.MaxActive < 1 || p.MaxActive > 1000 ||
 		len(p.Tasks) == 0 || len(p.Tasks) > 1000 {
 		return bad("plan metadata or limits")
+	}
+	if p.Brief != nil && (p.Brief.Revision < 1 || !SwarmValidHash(p.Brief.SHA256, false)) {
+		return bad("invalid discovery reference")
 	}
 	tasks := make(map[string]*SwarmTaskContract, len(p.Tasks))
 	for i := range p.Tasks {

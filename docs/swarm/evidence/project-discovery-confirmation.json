@@ -1,0 +1,174 @@
+{
+  "status": "passed",
+  "date": "2026-10-30",
+  "profile": "discovery-to-supervised-swarm",
+  "result": {
+    "status": "passed",
+    "path": "live-complete",
+    "run_id": "sao-746ecdaebdf54a3495c24ee0",
+    "fixture_source_commit": "f797e804b2d0e7ab686540de1bb9bd7f54ae5d50",
+    "lead_model": "gpt-6.1-sol",
+    "lead_effort": "high",
+    "worker_model": "gpt-5.6-luna",
+    "worker_effort": "low",
+    "session_count": 3,
+    "native_settings_verified": true,
+    "lead_native_actions": [
+      {
+        "action": "discovery_get",
+        "status": "completed"
+      },
+      {
+        "action": "discovery_save",
+        "status": "completed"
+      },
+      {
+        "action": "discovery_get",
+        "status": "completed"
+      },
+      {
+        "action": "discovery_save",
+        "status": "completed"
+      },
+      {
+        "action": "discovery_get",
+        "status": "completed"
+      },
+      {
+        "action": "prepare",
+        "status": "completed"
+      },
+      {
+        "action": "start",
+        "status": "completed"
+      },
+      {
+        "action": "get",
+        "status": "completed"
+      },
+      {
+        "action": "review",
+        "status": "completed"
+      }
+    ],
+    "workers": [
+      {
+        "id": "formatter",
+        "changed_files": [
+          "duration_formatter.py"
+        ],
+        "candidate_hash": "b6702661f38919e17a884a3c198a8a783acea113ae6f04ec2bb844dbd85da15f"
+      },
+      {
+        "id": "parser",
+        "changed_files": [
+          "duration_parser.py"
+        ],
+        "candidate_hash": "943bcc6882db8032a91b60a8198a2ca820afb9c12114833321025e190e24370a"
+      }
+    ],
+    "worker_turn_overlap_seconds": 12.515425,
+    "independent_checks": [
+      {
+        "runtime": "Python 3.9.6",
+        "tests": 14,
+        "exit_code": 0
+      },
+      {
+        "runtime": "Python 3.14.3",
+        "tests": 14,
+        "exit_code": 0
+      }
+    ],
+    "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+    "source_preserved": true,
+    "shutdown": {
+      "owned_pid": 15143,
+      "exit_code": 0,
+      "health_reachable": false,
+      "run_file_present": false
+    },
+    "first_brief_revision": 1,
+    "ready_brief_revision": 2,
+    "brief_binding": {
+      "revision": 2,
+      "sha256": "0920960901ac4985bbda0d5c409ad0c816eb3a7103be487b268c9f14e75a5b7f"
+    },
+    "retained_through_daemon_restart": true,
+    "native_resume_verified": true,
+    "questions_before_workers_verified": true,
+    "scripted_test_user_answers": true,
+    "lead_checks": [
+      {
+        "id": "formatter-module",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "formatter-type-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "formatter-range-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "formatter-huge-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "parser-module",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "parser-type-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "parser-invalid-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      },
+      {
+        "id": "parser-huge-check",
+        "exit_code": 0,
+        "native_execution_verified": true
+      }
+    ],
+    "lead_discovery_tests": 11,
+    "lead_review": "reviewed_pass",
+    "fixture_clean": true
+  },
+  "standard_launch_proof": {
+    "configured_service_tier": "default",
+    "fast_mode": false,
+    "config_probe_launched_models": false
+  },
+  "earlier_checks": [
+    {
+      "scope": "initial one-lead probe",
+      "outcome": "failed before workers: discovery HTTP errors were masked and unanswered strings were underspecified; fixed and covered by regression tests"
+    },
+    {
+      "scope": "question phase after repair",
+      "outcome": "passed: incomplete revision one, no workers; harness reply omitted --steer and exited before submitting it"
+    },
+    {
+      "scope": "resumed confirmation",
+      "outcome": "same lead and persisted brief resumed natively after daemon restart; scripted answers, execution, review and cleanup passed"
+    }
+  ],
+  "limitations": [
+    "One Mac fixture with scripted test-user replies, not a general discovery-quality benchmark.",
+    "Ready means required recorded data is present, not independent human approval.",
+    "Existing two-worker execution profile and execution permissions remain in effect.",
+    "The initial failed probe is retained and its model usage is included in the private usage receipt.",
+    "Standard is verified for launched fixture sessions via an isolated config override; current desktop chat speed was not machine-verifiable.",
+    "Raw transcripts, account balances and local paths remain private."
+  ]
+}

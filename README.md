@@ -4,6 +4,8 @@
 
 Praxis Swarm connects an AI project lead to a team of coding agents. Describe a goal and ask the lead to use Praxis Swarm: the lead prepares a plan, delegates work, follows the workers, and reviews their results.
 
+For an incomplete goal, [Project Discovery](docs/swarm/PROJECT_DISCOVERY.md) lets the managed lead ask questions and retain your decisions in a versioned brief before planning.
+
 The current supervised alpha has demonstrated this complete workflow with **Sol/high as the lead and Luna/low as both workers**, as well as a team using Luna/low throughout.
 
 Our goal is to make coordinating an AI team feel more like working with a project lead: you set the direction, and the lead helps organize the work and bring the results together.
@@ -87,6 +89,7 @@ Praxis Swarm is a **supervised source alpha** with a demonstrated lead-to-worker
 
 | Capability | Available today |
 |---|---|
+| **Project discovery** | The managed lead asks clarifying questions and persists a versioned brief before planning |
 | **Lead planning** | The lead creates a structured proposal from project requirements |
 | **Plan preparation** | A builder derives source and context identities and validates the assignments |
 | **Model roles** | A separately selected lead model coordinates two workers using one selected worker model and effort |
@@ -116,6 +119,7 @@ A separate trial also demonstrated Luna/low acting as the lead. These are succes
 
 ## Get started
 
+- [Clarify your project with the AI lead](docs/swarm/PROJECT_DISCOVERY.md)
 - [Start your first project with Codex](docs/swarm/GET_STARTED_CODEX.md)
 - [Start your first project in the terminal](docs/swarm/GET_STARTED_TERMINAL.md)
 - [AI lead workflow reference](docs/swarm/LEAD_REFERENCE.md)

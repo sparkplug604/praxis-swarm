@@ -23,6 +23,8 @@ type SupervisedSwarmController struct{ Svc supervised.Manager }
 
 // Register mounts the supervised run creation, observation and stop routes.
 func (c *SupervisedSwarmController) Register(r chi.Router) {
+	r.Get("/swarm/discovery/{projectId}", c.discovery)
+	r.Post("/swarm/discovery/{projectId}", c.discovery)
 	r.Post("/swarm/runs", c.start)
 	r.Post("/swarm/prepare", c.prepare)
 	r.Post("/swarm/runs/{runId}/review", c.review)

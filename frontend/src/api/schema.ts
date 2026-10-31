@@ -4261,6 +4261,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/swarm/discovery/{projectId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read a retained project discovery brief */
+        get: operations["getSwarmDiscovery"];
+        put?: never;
+        /** Append a project discovery revision with optimistic concurrency */
+        post: operations["saveSwarmDiscovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/swarm/prepare": {
         parameters: {
             query?: never;
@@ -6137,6 +6155,7 @@ export interface components {
             ownership: string;
         };
         DomainSwarmPlan: {
+            brief?: components["schemas"]["SwarmBriefRef"];
             budgetBucket: string;
             /** Format: int64 */
             maxActive: number;
@@ -6690,6 +6709,7 @@ export interface components {
             title: string;
         };
         PlanningLeadProposal: {
+            brief?: components["schemas"]["SwarmBriefRef"];
             effort: string;
             model: string;
             objective: string;
@@ -8022,6 +8042,42 @@ export interface components {
             snapshotPath?: string;
             status: string;
             workspacePath?: string;
+        };
+        SwarmBriefDraft: {
+            acceptance: string[];
+            assumptions: string[];
+            audience: string;
+            constraints: string[];
+            goal: string;
+            outcomes: string[];
+            questions: components["schemas"]["SwarmDiscoveryQuestion"][];
+        };
+        SwarmBriefRef: {
+            /** Format: int64 */
+            revision: number;
+            sha256: string;
+        };
+        SwarmDiscoveryBrief: {
+            brief: components["schemas"]["SwarmBriefDraft"];
+            /** Format: date-time */
+            createdAt: string;
+            missing: string[];
+            projectId: string;
+            /** Format: int64 */
+            revision: number;
+            sha256: string;
+            status: string;
+        };
+        SwarmDiscoveryQuestion: {
+            answer: string;
+            id: string;
+            question: string;
+            required: boolean;
+        };
+        SwarmDiscoveryUpdate: {
+            brief: components["schemas"]["SwarmBriefDraft"];
+            /** Format: int64 */
+            expectedRevision: number;
         };
         SwitchSessionAgentAccountRequest: {
             accountId: string;
@@ -24156,6 +24212,164 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    getSwarmDiscovery: {
+        parameters: {
+            query?: {
+                revision?: number;
+            };
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwarmDiscoveryBrief"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+        };
+    };
+    saveSwarmDiscovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SwarmDiscoveryUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SwarmDiscoveryBrief"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["APIError"];
+                };
+            };
+            /** @description Not Implemented */
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };

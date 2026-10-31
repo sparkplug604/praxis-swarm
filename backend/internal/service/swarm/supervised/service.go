@@ -75,6 +75,9 @@ func (s *Service) Start(ctx context.Context, in StartInput) (Run, error) {
 	if !errors.Is(err, domain.ErrSwarmNotFound) {
 		return Run{}, err
 	}
+	if _, err := s.checkBrief(ctx, plan.ProjectID, plan.Brief); err != nil {
+		return Run{}, err
+	}
 	now := time.Now().UTC()
 	run := Run{ID: id, Profile: Profile, RequestID: in.RequestID, RequestHash: hash, Plan: plan, Status: "running", CreatedAt: now, DeadlineAt: now.Add(time.Duration(in.TimeoutSeconds) * time.Second), Tasks: []Task{}, Errors: []string{}, Limits: []string{
 		"Supervised AO worktrees; no exact-copy runtime qualification or adversarial containment claim.",

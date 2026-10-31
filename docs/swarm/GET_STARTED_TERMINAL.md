@@ -186,6 +186,11 @@ advisory, not a spending cap.
 ao session get "$LEAD_ID" --transcript 20 --cap 2000
 ```
 
+If the lead asks for clarification, reply in its managed chat or use
+`ao send --session "$LEAD_ID" --steer --client-message-id discovery-answer-1 --message "YOUR ANSWER"`.
+Inspect its brief with `ao swarm discovery get first-swarm`; see
+[Project Discovery](PROJECT_DISCOVERY.md) for revision and readiness behavior.
+
 Repeat this command occasionally. You should see the lead read the specification,
 prepare a proposal, start a run, follow two worker sessions and review their output.
 The lead's final response should include its **run ID**, combined review directory,

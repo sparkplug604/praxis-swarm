@@ -5,6 +5,40 @@ The [GitHub launch plan](GITHUB_LAUNCH_PLAN.md) defines the current first-releas
 sequence; the [full build plan](BUILD_PLAN.md) retains the wider requirements.
 Older game/Praxis handoffs and experimental boards do not override this record.
 
+## Project Discovery — 30 October 2026
+
+Implemented persistent, versioned project briefs and clarification questions through
+native lead tools, terminal commands and HTTP. Readiness is derived from supplied
+fields and required answers. Plans bind to the current ready revision/hash;
+incomplete or stale discovery blocks preparation/new runs. Immutable history and
+optimistic concurrency preserve prior decisions. Legacy supplied-plan projects
+remain compatible; existing run replay remains available after brief changes.
+[Guide](PROJECT_DISCOVERY.md).
+
+Full affected domain, planning, supervised, storage, CLI, prompt, HTTP and telemetry
+tests passed. Discovery/MCP/lead race checks passed; backend lint reports zero issues,
+frontend type checking passed, generated API output reproduces exactly, and six
+Python tests plus public-boundary checks pass. Initial sandbox-only loopback
+failures were rerun with the required local test-server permission.
+
+The live fixture asked questions with no workers, retained revision one through a
+daemon restart, resumed the same native lead, incorporated scripted answers in
+ready revision two, and completed two-worker execution/review. Eight actual lead
+checks and 11-test discovery passed. Independently reconstructed candidates pass
+14 tests on Python 3.9.6 and 3.14.3. Launch config explicitly selected Standard.
+An initial masked-error/question-schema defect was fixed with regression coverage;
+a harness --steer omission was repaired before resuming the same lead. Failed
+checks are retained and included in the local usage receipt.
+[Confirmation evidence](evidence/project-discovery-confirmation.md).
+
+Implementation tokens, failed/live actors, cached input and account observations
+are recorded outside the repository for this build. The initial processed-token
+forecast underestimated the repeated input from this long implementation chat.
+Current-chat speed was not machine-verifiable; the user reported selecting Default.
+Credit observations are account-wide and are not isolated invoices. No paid model
+calls were added to CI. Broader discovery-quality and project-scale trials remain
+future work.
+
 ## Terminal parser correction and rerun — 30 October 2026
 
 Corrected the captured parser in a separate evidence artifact by moving its

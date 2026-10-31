@@ -19,14 +19,15 @@ import (
 
 // LeadProposal contains project decisions; the builder supplies machine identities.
 type LeadProposal struct {
-	ProjectID     domain.ProjectID `json:"projectId"`
-	Objective     string           `json:"objective"`
-	Specification string           `json:"specification"`
-	Model         string           `json:"model"`
-	Effort        string           `json:"effort"`
-	TokenLimit    int64            `json:"tokenLimit"`
-	Tools         []ProposalTool   `json:"tools"`
-	Tasks         []ProposalTask   `json:"tasks"`
+	Brief         *domain.SwarmBriefRef `json:"brief,omitempty"`
+	ProjectID     domain.ProjectID      `json:"projectId"`
+	Objective     string                `json:"objective"`
+	Specification string                `json:"specification"`
+	Model         string                `json:"model"`
+	Effort        string                `json:"effort"`
+	TokenLimit    int64                 `json:"tokenLimit"`
+	Tools         []ProposalTool        `json:"tools"`
+	Tasks         []ProposalTask        `json:"tasks"`
 }
 
 // ProposalTool names an executable; version is supplied metadata, never executed.
@@ -128,6 +129,10 @@ func BuildProposal(ctx context.Context, p LeadProposal, snapshot workspace.Snaps
 		paths[t.Name] = canonical
 	}
 	plan := domain.SwarmPlan{ProtocolVersion: 1, Version: 1, ProjectID: p.ProjectID, SourceCommit: snapshot.Source.Head, Objective: p.Objective, BudgetBucket: "lead-supervised-advisory", TokenLimit: p.TokenLimit, MaxActive: 2}
+	if p.Brief != nil {
+		ref := *p.Brief
+		plan.Brief = &ref
+	}
 	for _, t := range p.Tasks {
 		progressFound := false
 		for _, entry := range snapshot.Source.Entries {
