@@ -57,7 +57,7 @@ At completion, ask for a concise summary if it was not already provided:
 > Show the run ID, each worker's changed file, the checks actually run by the lead,
 > any defects, and where I can inspect the combined code and review logs.
 
-The fixture supplies **10 tests**. A completed workflow reports their actual
+The fixture supplies **11 tests**. A completed workflow reports their actual
 results, two finished worker turns, the preserved original repository, and the
 lead's acceptance decision. The lead can mark **changes required** even when
 those tests pass: review can uncover cases the supplied tests missed.

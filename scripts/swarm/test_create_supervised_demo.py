@@ -98,7 +98,7 @@ class GeneratorTests(unittest.TestCase):
             baseline = subprocess.run(checks[0]["command"], cwd=repository, capture_output=True, text=True, timeout=15)
             self.assertEqual(baseline.returncode, 1)
             self.assertIn("NotImplementedError", baseline.stderr)
-            self.assertIn("Ran 5 tests", baseline.stderr)
+            self.assertIn("Ran 6 tests" if task["id"] == "parser" else "Ran 5 tests", baseline.stderr)
         self.assertEqual(len(set(scopes)), 2)
         self.assertEqual(self.git(repository, "status", "--porcelain=v1", "--untracked-files=all"), "")
         self.assertEqual(shlex.split(receipt["projectAddCommand"]),

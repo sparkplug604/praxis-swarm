@@ -195,7 +195,7 @@ your trial's AO data/session artifacts, not this checkout.
 With the reported run ID, use `ao swarm get RUN_ID` to inspect the retained run.
 A completed walkthrough has two finished worker turns, a retained supervised
 report, a preserved source project, and a lead review with actual check logs.
-The supplied fixture has **10 unittest tests**. Read both the test output and
+The supplied fixture has **11 unittest tests**. Read both the test output and
 the review decision: passing those tests does not guarantee acceptance.
 
 The lead may report **changes required** after finding an additional defect.
