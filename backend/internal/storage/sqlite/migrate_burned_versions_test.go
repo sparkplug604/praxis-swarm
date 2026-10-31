@@ -22,6 +22,7 @@ import (
 // session list). Renaming, renumbering, or deleting a shipped migration
 // produces exactly that class of failure, so this list is append-only.
 var shippedMigrations = map[int64]string{
+	20261031050000000: "20261031050000000_add_swarm_discovery.sql",
 	20261029205354014: "20261029205354014_add_swarm_supervised_runs.sql",
 	20261029070054116: "20261029070054116_add_swarm_execution_receipts.sql",
 	20261029062138749: "20261029062138749_add_swarm_scheduler.sql",
