@@ -7,7 +7,7 @@ Older game/Praxis handoffs and experimental boards do not override this record.
 
 ## Lead workflow publication — 30 October 2026
 
-Publishing the reviewed README, lead proposal/builder, execution and review bridge,
+Published the reviewed README, lead proposal/builder, execution and review bridge,
 native stdio permission fix, generated API client, tests and sanitized evidence for
 `sparkplug604/praxis-swarm`. Selected frozen Sol/Luna demonstration files and the
 unchanged independent evaluator are included for a model-free reproduction check.
@@ -18,7 +18,17 @@ six Python tests, public boundary and zero lint issues. The selected captured de
 passes all 13 tests on both Python versions. Staged changes have zero secret-scanner
 findings and checked local links. Full inherited suites are left to hosted CI.
 The existing alpha tag remains unchanged; this publishes source on main, not a
-new tag or installer. Hosted validation is pending on this publication commit.
+new tag or installer. Implementation commit:
+[`f13fe4385`](https://github.com/sparkplug604/praxis-swarm/commit/f13fe43856652995a418b273ed91670f9119f38b).
+A fresh clone from GitHub builds the CLI and passes all 13 captured-demo checks,
+with a clean checkout. Hosted cross-platform CLI E2E, secret scanning, public
+boundary, mobile and workflow-gate checks passed. At this publication update,
+[supervised alpha](https://github.com/sparkplug604/praxis-swarm/actions/runs/41160447117),
+[full Go](https://github.com/sparkplug604/praxis-swarm/actions/runs/41160447104), and
+[frontend](https://github.com/sparkplug604/praxis-swarm/actions/runs/41160447024)
+workflows are still running and are not claimed as passed. This metadata-only
+update intentionally skips CI; implementation is identical to the linked tested
+commit. Next verification: inspect those remaining hosted outcomes.
 
 ## Sol/high lead with Luna/low workers — 30 October 2026
 
