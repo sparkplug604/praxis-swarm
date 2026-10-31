@@ -5,6 +5,24 @@ The [GitHub launch plan](GITHUB_LAUNCH_PLAN.md) defines the current first-releas
 sequence; the [full build plan](BUILD_PLAN.md) retains the wider requirements.
 Older game/Praxis handoffs and experimental boards do not override this record.
 
+## Terminal parser correction and rerun — 30 October 2026
+
+Corrected the captured parser in a separate evidence artifact by moving its
+field-length validation before separator indexing. The added truncated-prefix
+regression fails on the original parser and passes on the correction on both
+Python runtimes. New generated fixtures include this regression (11 tests);
+the generator's six local tests pass. Original failure records, snapshots and
+historical test suites remain unchanged.
+
+A fresh terminal trial used one Sol/high lead and two Luna/low workers: nine
+actual declared checks and 11 discovery tests passed; lead review accepted the
+candidate. Independent testing passed all 14 tests on Python 3.9.6 and 3.14.3.
+Native settings, scoped captures, source preservation and daemon cleanup were
+verified. The prepublication clone used the local candidate commit; the rest of
+the terminal workflow was reused. No replacement run, substitution or merge.
+[Correction, reproduction and rerun evidence](evidence/terminal-parser-rerun.md).
+Broader project qualification remains open.
+
 ## First-project walkthroughs — 30 October 2026
 
 Added [Codex](GET_STARTED_CODEX.md) and [terminal](GET_STARTED_TERMINAL.md)

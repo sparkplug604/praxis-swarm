@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-30",
+  "status": "passed",
+  "original_failure_preserved": true,
+  "original_evidence_sha256": {
+    "walkthrough-verification.json": "31d3887e34001ee7a5f7543f148e0ec980d6fe0f0ed39a8607f3ecc3ab7b944b",
+    "walkthrough-verification.md": "44c8034d4e5175d24b2fe4ebb6d6186d91643fbb1e1a7b3f3ac96c2bc22c215f"
+  },
+  "original_private_evidence_manifest_sha256": "a402e5dd0c02039620261ef5e1f51dfb37edf58c6a55448ff6019ee12b6f3a7e",
+  "direct_correction": {
+    "before_parser_sha256": "075fff1ad397fb3994e06b39329ac0c0f35f041bc0a47d3b7e9cf2e317f61f32",
+    "after_parser_sha256": "dd6479569a6ca11472baa5df7062d2e37306571174ff132135c9225b8e83b6c6",
+    "change": "Validate len(text) == colon + 10 before indexing separators.",
+    "new_regression": "Every proper prefix of six canonical strings with one through six hour digits.",
+    "before_after_regression": [
+      {
+        "runtime": "python39",
+        "version": "before",
+        "exit_code": 1
+      },
+      {
+        "runtime": "python39",
+        "version": "after",
+        "exit_code": 0
+      },
+      {
+        "runtime": "python314",
+        "version": "before",
+        "exit_code": 1
+      },
+      {
+        "runtime": "python314",
+        "version": "after",
+        "exit_code": 0
+      }
+    ],
+    "corrected_full_suite": [
+      {
+        "runtime": "Python 3.9.6",
+        "tests": 14,
+        "exit_code": 0
+      },
+      {
+        "runtime": "Python 3.14.3",
+        "tests": 14,
+        "exit_code": 0
+      }
+    ]
+  },
+  "fresh_terminal_rerun": {
+    "status": "passed",
+    "path": "terminal",
+    "run_id": "sao-788f347a9a6758ab4ad05171",
+    "source_commit": "b211f27736236cf3066661c960d91a0b7408fe42",
+    "lead_model": "gpt-6.1-sol",
+    "lead_effort": "high",
+    "worker_model": "gpt-5.6-luna",
+    "worker_effort": "low",
+    "session_count": 3,
+    "native_settings_verified": true,
+    "lead_native_actions": [
+      {
+        "action": "prepare_result_observed_arguments_truncated",
+        "status": "completed"
+      },
+      {
+        "action": "start",
+        "status": "completed"
+      },
+      {
+        "action": "get",
+        "status": "completed"
+      },
+      {
+        "action": "review",
+        "status": "completed"
+      }
+    ],
+    "workers": [
+      {
+        "id": "formatter",
+        "changed_files": [
+          "duration_formatter.py"
+        ],
+        "candidate_hash": "ec8108320c27c2f4707ac5ab65f295853bb23d68815dada00476ea689cb22e92"
+      },
+      {
+        "id": "parser",
+        "changed_files": [
+          "duration_parser.py"
+        ],
+        "candidate_hash": "9933fac798296e461dd978e1bb8b14ece6471df6c294f972d29415617c79c6a9"
+      }
+    ],
+    "worker_turn_overlap_seconds": 13.302809,
+    "independent_checks": [
+      {
+        "runtime": "Python 3.9.6",
+        "tests": 14,
+        "exit_code": 0
+      },
+      {
+        "runtime": "Python 3.14.3",
+        "tests": 14,
+        "exit_code": 0
+      }
+    ],
+    "oracle_sha256": "408c09347b5df74fbf0a7c97433c82ae5f96c0d1dd763fc7904c324325da7525",
+    "source_preserved": true,
+    "clone_clean": true,
+    "shutdown": {
+      "document_commands_exit_code": 0,
+      "health_reachable": false,
+      "run_file_present": false
+    },
+    "lead_review_outcome": "reviewed_passed_candidate",
+    "lead_declared_checks": [
+      {
+        "id": "formatter-suite",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "formatter-type-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "formatter-range-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "formatter-huge-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "parser-suite",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "parser-non-string-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "parser-invalid-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "parser-truncated-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      },
+      {
+        "id": "parser-huge-error",
+        "exit_code": 0,
+        "actual_native_execution_verified": true
+      }
+    ],
+    "lead_discovery_tests": 11,
+    "candidate_accepted_by_lead": true
+  },
+  "three_fresh_native_provider_sessions": true,
+  "scope": "Terminal walkthrough from a fresh local clone of the candidate commit before publication; only clone source was changed from the documented GitHub URL. All setup, live planning/execution/review and cleanup blocks were otherwise reused.",
+  "interpretation": "The hand-corrected original parser and the new worker-authored parser are distinct artifacts. Both pass the regression; original snapshots were not edited. The fresh trial starts from unfinished helpers and the strengthened fixture tests, not preimplemented solutions.",
+  "limits": [
+    "One Mac duration fixture; not general task qualification.",
+    "Original unchanged independent oracle has three tests; new fixture regression expands combined discovery to fourteen.",
+    "Run identity is daemon-scoped and can repeat across isolated stores.",
+    "No replacement run, model substitution or automatic merge.",
+    "Raw transcripts, local paths and account data remain private."
+  ]
+}

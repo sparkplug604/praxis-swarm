@@ -199,11 +199,13 @@ The supplied fixture has **11 unittest tests**. Read both the test output and
 the review decision: passing those tests does not guarantee acceptance.
 
 The lead may report **changes required** after finding an additional defect.
-In the terminal verification run, all 10 supplied tests passed, but the lead
+In the original terminal verification run, all 10 supplied tests passed, but the lead
 caught a parser boundary error and held the candidate for repair. That is a
 completed review with an unaccepted candidate, not permission to merge. Keep the
 evidence and authorize a separate correction only after inspecting the finding.
-See the [actual walkthrough results](evidence/walkthrough-verification.md).
+The parser correction and the strengthened 11-test fixture were then verified
+in a [separate terminal rerun](evidence/terminal-parser-rerun.md). The
+[original walkthrough evidence](evidence/walkthrough-verification.md) is preserved.
 
 The original helper files remain unfinished: results are in frozen worker
 snapshots and the combined review directory. To check that directory yourself,
